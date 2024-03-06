@@ -1,5 +1,11 @@
 import "./index.css";
 
+import AWorker from "./lib/workers/Solver.ts?worker";
+
+const myWorker = new AWorker();
+
+myWorker.postMessage("Hola Estimado");
+
 function App() {
   return (
     <>
