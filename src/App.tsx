@@ -7,6 +7,7 @@ import { useState } from "react";
 
 const input: InputSimplex = {
   type: "maximization",
+  numberOfVariables: 2,
   objetiveFunction: [300, 400],
   valueOf: undefined,
   restrictions: [
