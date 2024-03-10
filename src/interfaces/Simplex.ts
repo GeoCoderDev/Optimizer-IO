@@ -11,6 +11,7 @@ export type AdditionalVariables =
 export const Z_COEFFICIENTS = {
   ...Z_ADDITIONAL_VARIABLES_COEFFICIENTS,
   Z: 1,
+  Sol: 0,
 };
 
 export const ADDITIONAL_VARIABLES: {
@@ -26,6 +27,12 @@ export const ADDITIONAL_VARIABLES: {
 export type ZCoefficients = keyof typeof Z_COEFFICIENTS;
 
 export type AllNamesVariables = "X" | ZCoefficients;
+
+export const RESTRICTION_COEFFICIENTS  = {
+  S: 1,
+  E: -1,
+  A: 1
+}
 
 export interface InputSimplex {
   type: "maximization" | "minimization" | "valueOf";

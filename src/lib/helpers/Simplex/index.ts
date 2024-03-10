@@ -2,6 +2,7 @@ import {
   ADDITIONAL_VARIABLES,
   Board,
   HeaderBoard,
+  RESTRICTION_COEFFICIENTS,
   Restriction,
   RowNumber,
   Z_COEFFICIENTS,
@@ -41,6 +42,9 @@ export function assembleFirstBoard({
     });
   });
 
+  //Agregando la columna de solucion
+  columnNames.push({ letter: "Sol" });
+
   const firstRowNumber: RowNumber = [
     ...columnNames.map((columnName) => {
       if (columnName.letter === "X") {
@@ -50,11 +54,17 @@ export function assembleFirstBoard({
       return Z_COEFFICIENTS[columnName.letter];
     }),
   ];
-  
+
   const rowNumbers: RowNumber[] = [
     firstRowNumber,
-    ...restrictions.map((restriction) => {
-      return restriction.coefficients;
+    ...restrictions.map((restriction, rIndex) => {
+      return columnNames.map(({ letter, number }, colIndex) => {
+        if (letter === "Z") return 0;
+        if (letter === "X") return restriction.coefficients[colIndex - 1];
+        if (letter === "Sol") return restriction.independentTerm;
+        if (number === rIndex + 1) return RESTRICTION_COEFFICIENTS[letter];
+        return 0;
+      });
     }),
   ];
 
