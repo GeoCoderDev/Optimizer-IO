@@ -2,6 +2,7 @@ import { Board } from "../lib/utils/Simplex/Board";
 import { Equality } from "../lib/utils/Simplex/Equality";
 import {  MixedNumberWithTermM } from '../lib/utils/Simplex/MixedNumberWithM';
 import { TermM } from "../lib/utils/Simplex/TermM";
+import { RationalNumber } from "./Fraction";
 
 //INPUT SIMPLEX
 export const Z_ADDITIONAL_VARIABLES_COEFFICIENTS_MAX: AdditionalVariablesValues =
@@ -75,8 +76,7 @@ export interface OutputSimplex {
   reformulation: Reformulation;
   boards: Board[];
   optimalValues: number[];
-  optimalSolution: number;
-  
+  optimalSolution: number;  
 }
 
 export interface Reformulation {
@@ -89,10 +89,10 @@ export interface Reformulation {
 
 export type SideEquality = keyof LinealTermsEquality;
 
-export type CoefficientMethodBigM = number | TermM | MixedNumberWithTermM; 
+export type CoefficientMethodBigM = RationalNumber | TermM | MixedNumberWithTermM; 
 
 export interface LinealTerm {
-  coefficient: number;
+  coefficient: RationalNumber;
   variableName: VariableName;
 }
 
@@ -107,7 +107,7 @@ export interface LinealTermsEquality {
 }
 
 export interface IndependentTermEquality {
-  value: number;
+  value: RationalNumber;
   side: SideEquality;
 }
 

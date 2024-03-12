@@ -1,32 +1,33 @@
 import { SimplexErrorsCodes } from "../../../errors/Simplex/simplexErrorCodes";
+import { RationalNumber } from "../../../interfaces/Fraction";
 import { CoefficientMethodBigM } from "../../../interfaces/Simplex";
 import {
   AdditiveOperations,
-  BasicArithmeticOperations,
-  basicArithmeticOperation,
+  BasicArithmeticOperations
 } from "../../helpers/basicOperations";
+import { operateBetweenRationalNumbers } from './Equality';
 import { TermM } from "./TermM";
 
 export class MixedNumberWithTermM extends TermM {
-  independentTerm: number;
+  independentTerm: RationalNumber;
 
   constructor({
     coefficientTermM,
     independentTerm,
   }: {
-    coefficientTermM: number;
-    independentTerm: number;
+    coefficientTermM: RationalNumber;
+    independentTerm: RationalNumber;
   }) {
     super(coefficientTermM);
     this.independentTerm = independentTerm;
   }
 
-  override operateWithNumber(
+  override operateWithRationalNumber(
     operation: BasicArithmeticOperations,
-    operand: number,
+    operand: RationalNumber,
     inverse: boolean
   ): CoefficientMethodBigM {
-    const independentResult = basicArithmeticOperation(
+    const independentResult = operateBetweenRationalNumbers(
       operation,
       inverse,
       this.independentTerm,
@@ -35,7 +36,7 @@ export class MixedNumberWithTermM extends TermM {
 
     let coefficientTermM;
     if (operation === "*" || operation === "/") {
-      coefficientTermM = basicArithmeticOperation(
+      coefficientTermM = operateBetweenRationalNumbers(
         operation,
         inverse,
         this.coefficient,
@@ -69,15 +70,15 @@ export class MixedNumberWithTermM extends TermM {
     operation: AdditiveOperations,
     operandTermM: TermM,
     inverse: boolean
-  ): MixedNumberWithTermM | number {
-    const independentTerm = basicArithmeticOperation(
+  ): MixedNumberWithTermM | RationalNumber {
+    const independentTerm = operateBetweenRationalNumbers(
       operation,
       inverse,
       this.independentTerm,
       0
     );
 
-    const coefficientTermM = basicArithmeticOperation(
+    const coefficientTermM = operateBetweenRationalNumbers(
       operation,
       inverse,
       operandTermM.coefficient
@@ -92,14 +93,14 @@ export class MixedNumberWithTermM extends TermM {
     operandMixedNumberWithTermM: MixedNumberWithTermM,
     inverse: boolean
   ): CoefficientMethodBigM {
-    const resultIndependentTerms = basicArithmeticOperation(
+    const resultIndependentTerms = operateBetweenRationalNumbers(
       operation,
       inverse,
       this.independentTerm,
       operandMixedNumberWithTermM.independentTerm
     );
 
-    const resultTermsM: number = basicArithmeticOperation(
+    const resultTermsM: RationalNumber = operateBetweenRationalNumbers(
       operation,
       inverse,
       this.coefficient,
@@ -135,6 +136,6 @@ export class MixedNumberWithTermM extends TermM {
       return this.operateWithTermM(operation, operand, inverse);
     }
 
-    return this.operateWithNumber(operation, operand, inverse);
+    return this.operateWithRationalNumber(operation, operand, inverse);
   }
 }

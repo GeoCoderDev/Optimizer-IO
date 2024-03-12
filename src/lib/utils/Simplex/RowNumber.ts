@@ -1,16 +1,16 @@
+import { RationalNumber } from "../../../interfaces/Fraction";
 import { CoefficientMethodBigM } from "../../../interfaces/Simplex";
 import {
-  MultiplicativeOperands,
+  BasicArithmeticOperations,
   MultiplicativeOperations,
 } from "../../helpers/basicOperations";
-import { Equality } from "./Equality";
+import { Equality, operateBetweenRationalNumbers } from "./Equality";
 import { TermM } from "./TermM";
-
 
 export class RowNumber {
   coefficients: CoefficientMethodBigM[];
 
-  constructor(coefficients: Equality | number[]) {
+  constructor(coefficients: Equality | CoefficientMethodBigM[]) {
     if (coefficients instanceof Equality)
       this.coefficients = [
         ...coefficients
@@ -22,15 +22,18 @@ export class RowNumber {
 
   operate(
     operation: MultiplicativeOperations,
-    operand: number | TermM,
+    operand: RationalNumber | TermM,
     modifyOriginal = false
   ): RowNumber {
-    const coefficients: number[] = [
-      ...this.coefficients.map((coefficient) => {
-        return operation === "*"
-          ? coefficient * operand
-          : coefficient / operand;
-      }),
+    const coefficients = [
+      ...this.coefficients.map((coefficient) =>
+        operateBetweenCoefficientOfMethodBigM(
+          operation,
+          false,
+          coefficient,
+          operand
+        )
+      ),
     ];
 
     if (modifyOriginal) {
@@ -40,4 +43,22 @@ export class RowNumber {
 
     return new RowNumber(coefficients);
   }
+}
+
+export function operateBetweenCoefficientOfMethodBigM(
+  operation: BasicArithmeticOperations,
+  inverse: boolean,
+  ...operands: CoefficientMethodBigM[]
+) {
+  const coefficientOfMethodBigMOperand = inverse
+    ? operands.reverse()
+    : operands;
+
+  return coefficientOfMethodBigMOperand.reduce((acum, val) => {
+    if (acum instanceof TermM) return acum.operateWith(operation, val);
+
+    if (val instanceof TermM) return val.operateWith(operation, acum, true);
+
+    return operateBetweenRationalNumbers(operation, inverse, acum, val);
+  });
 }

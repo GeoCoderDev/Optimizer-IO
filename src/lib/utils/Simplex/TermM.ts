@@ -1,26 +1,27 @@
 import { SimplexErrorsCodes } from "../../../errors/Simplex/simplexErrorCodes";
+import { RationalNumber } from "../../../interfaces/Fraction";
 import { CoefficientMethodBigM } from "../../../interfaces/Simplex";
 import {
   AdditiveOperations,
-  BasicArithmeticOperations,
-  basicArithmeticOperation,
+  BasicArithmeticOperations
 } from "../../helpers/basicOperations";
+import { operateBetweenRationalNumbers } from "./Equality";
 import { MixedNumberWithTermM } from "./MixedNumberWithM";
 
 export class TermM {
-  coefficient: number;
+  coefficient: RationalNumber;
 
-  constructor(coefficient: number) {
+  constructor(coefficient: RationalNumber) {
     this.coefficient = coefficient;
   }
 
-  operateWithNumber(
+  operateWithRationalNumber(
     operation: BasicArithmeticOperations,
-    operand: number,
+    operand: RationalNumber,
     inverse: boolean
   ): CoefficientMethodBigM {
     if (operation === "*" || operation === "/") {
-      const result = basicArithmeticOperation(
+      const result = operateBetweenRationalNumbers(
         operation,
         inverse,
         this.coefficient,
@@ -41,8 +42,8 @@ export class TermM {
     operation: AdditiveOperations,
     operandTermM: TermM,
     inverse: boolean
-  ): number | TermM {
-    const result = basicArithmeticOperation(
+  ): RationalNumber | TermM {
+    const result = operateBetweenRationalNumbers(
       operation,
       inverse,
       this.coefficient,
@@ -58,7 +59,7 @@ export class TermM {
     inverse: boolean
   ): CoefficientMethodBigM {
     const independentResult = operandMixedNumberWithTermM.independentTerm;
-    const coefficientTermM = basicArithmeticOperation(
+    const coefficientTermM = operateBetweenRationalNumbers(
       operation,
       inverse,
       this.coefficient,
@@ -94,6 +95,6 @@ export class TermM {
       return this.operateWithTermM(operation, operand, inverse);
     }
 
-    return this.operateWithNumber(operation, operand, inverse);
+    return this.operateWithRationalNumber(operation, operand, inverse);
   }
 }
