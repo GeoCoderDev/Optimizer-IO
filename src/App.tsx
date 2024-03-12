@@ -8,18 +8,17 @@ import { useState } from "react";
 const input: InputSimplex = {
   type: "maximization",
   numberOfVariables: 2,
-  objetiveFunction: [300, 400],
-  valueOf: undefined,
+  objetiveFunction: [8, 6],  
   restrictions: [
     {
-      coefficients: [3, 3],
-      comparisonSign: "less than or equal",
-      independentTerm: 120,
+      coefficients: [2, 1],
+      comparisonSign: ">=",
+      independentTerm: 10,
     },
     {
-      coefficients: [3, 6],
-      comparisonSign: "less than or equal",
-      independentTerm: 180,
+      coefficients: [3, 8],
+      comparisonSign: "<=",
+      independentTerm: 96,
     },
   ],
 };
@@ -27,7 +26,9 @@ const input: InputSimplex = {
 function App() {
   const simplexWorker = useSelector((state: RootState) => state.simplexEvent);
 
-  const [channelAbort, setChannelAbort] = useState<BroadcastChannel|null>(null);
+  const [channelAbort, setChannelAbort] = useState<BroadcastChannel | null>(
+    null
+  );
 
   return (
     <>
@@ -35,14 +36,14 @@ function App() {
       <button
         onClick={() => {
           const dataSimplex = simplexWorker.addOperation(input);
-          setChannelAbort(dataSimplex.channel)
+          setChannelAbort(dataSimplex.channel);
         }}
       >
         RESOLVER
       </button>
       <button
         onClick={() => {
-          if(channelAbort) channelAbort.postMessage("abort");
+          if (channelAbort) channelAbort.postMessage("abort");
         }}
       >
         Cancelar

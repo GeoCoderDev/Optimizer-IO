@@ -1,8 +1,14 @@
 // worker.ts
 
-import { InputSimplex } from "../../interfaces/Simplex";
-import { assembleFirstBoard } from "../helpers/Simplex";
+import { SimplexErrorsCodes } from "../../errors/Simplex/simplexErrorCodes";
+import { InputSimplex, OutputSimplex } from "../../interfaces/Simplex";
+import {
+  assembleFirstBoard,
+  assembleReformulation,
+  iterateMethodBigM,
+} from "../helpers/Simplex";
 import { MessageForWorker } from "../utils/CustomEventWorker";
+import { Board } from "../utils/Simplex/Board";
 
 self.addEventListener(
   "message",
@@ -10,9 +16,6 @@ self.addEventListener(
     let aborted = false;
 
     const { input: inputSimplex, nameChannel } = e.data;
-
-    const { numberOfVariables, objetiveFunction, restrictions, valueOf } =
-      inputSimplex;
 
     const channel = new BroadcastChannel(nameChannel);
 
@@ -24,33 +27,41 @@ self.addEventListener(
       }
     });
 
-    if (inputSimplex.type === "maximization") {
+    const reformulation = assembleReformulation(inputSimplex);
 
-      const firstBoard = assembleFirstBoard({
-        numberOfVariables,
-        objetiveFunction,
-        restrictions,
-      });
+    const firstBoard = assembleFirstBoard(reformulation!);
 
-      setTimeout(() => {
-        if (!aborted) {
-          //Debes comprobar siempre que esto este en false para poder hacer operaciones
-          console.log(
-            "HOLA AMIGO ESTAMOS EMPEZANDO BIEN!",
-            firstBoard
-          );
-        } else {
-          console.log("Se cancelo");
-        }
-      }, 2000);
+    const boards: Board[] = [];
+    let currentBoard: Board = firstBoard!;
+
+    try {
+      while (currentBoard.hasNegativeCoefficientsInZ())
+        boards.push((currentBoard = iterateMethodBigM(currentBoard)));
+    } catch (e) {
+      if (e instanceof Error) {
+        if (e.message === SimplexErrorsCodes.NOT_OPERABLE_OPERANDS)
+          return self.postMessage(new Error(e.message));
+      }
     }
 
-    if (inputSimplex.type === "minimization") {
-    }
+    setTimeout(() => {
+      if (!aborted) {
+        //Debes comprobar siempre que esto este en false para poder hacer operaciones
+        console.log("HOLA AMIGO ESTAMOS EMPEZANDO BIEN!", firstBoard);
+      } else {
+        console.log("Se cancelo");
+      }
+    }, 2000);
 
-    if (inputSimplex.type === "valueOf") {
-    }
+    console.log(boards);
 
-    self.postMessage(new Error("Invalid-Type"));
+    // const output: OutputSimplex = {
+    //   boards,
+    //   optimalSolution,
+    //   optimalValues,
+    //   reformulation: reformulation!,
+    // };
+
+    // self.postMessage(output);
   }
 );

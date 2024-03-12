@@ -1,0 +1,3 @@
+export enum FractionErrors{
+    DENOMINATOR_CANNOT_ZERO = "DENOMINATOR-CANNOT-ZERO"
+}
