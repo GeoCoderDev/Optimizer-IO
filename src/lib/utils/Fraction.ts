@@ -16,10 +16,14 @@ export class Fraction {
     this.denominator = data.denominator;
   }
 
-  toNumber(precision?: number) {
+  toNumber(precision?: number): number {
     return precision
-      ? (this.numerator / this.denominator).toFixed(precision)
+      ? Number((this.numerator / this.denominator).toFixed(precision))
       : this.numerator / this.denominator;
+  }
+
+  toString() {
+    return `${this.numerator}/${this.denominator}`;
   }
 
   operateWithOtherFraction(

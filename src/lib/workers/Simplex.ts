@@ -1,14 +1,14 @@
 // worker.ts
-
-import { SimplexErrorsCodes } from "../../errors/Simplex/simplexErrorCodes";
-import { InputSimplex, OutputSimplex } from "../../interfaces/Simplex";
+import { SimplexErrorCodes } from "../../errors/Simplex/simplexErrorCodes";
+import { InputSimplex } from "../../interfaces/Simplex";
 import {
-  assembleFirstBoard,
+  assembleFirstSimplexBoard,
   assembleReformulation,
   iterateMethodBigM,
 } from "../helpers/Simplex";
 import { MessageForWorker } from "../utils/CustomEventWorker";
-import { Board } from "../utils/Simplex/Board";
+import { SimplexBoard } from "../utils/Simplex/Board";
+import { WorkerOrders } from "./WorkerOrders";
 
 self.addEventListener(
   "message",
@@ -20,8 +20,7 @@ self.addEventListener(
     const channel = new BroadcastChannel(nameChannel);
 
     channel.addEventListener("message", (e: MessageEvent<string>) => {
-      console.log(nameChannel);
-      if (e.data === "abort") {
+      if (e.data === WorkerOrders.ABORT) {
         aborted = true;
         channel.close();
       }
@@ -29,17 +28,39 @@ self.addEventListener(
 
     const reformulation = assembleReformulation(inputSimplex);
 
-    const firstBoard = assembleFirstBoard(reformulation!);
+    const firstBoard = assembleFirstSimplexBoard(reformulation!);
 
-    const boards: Board[] = [];
-    let currentBoard: Board = firstBoard!;
+    const simplexBoards: SimplexBoard[] = [];
+    let currentSimplexBoard: SimplexBoard | SimplexBoard[] = firstBoard!;
 
     try {
-      while (currentBoard.hasNegativeCoefficientsInZ())
-        boards.push((currentBoard = iterateMethodBigM(currentBoard)));
+      if (!Array.isArray(currentSimplexBoard)) {
+        while (currentSimplexBoard.hasNegativeCoefficientsInZ()) {
+          simplexBoards.push(
+            (currentSimplexBoard = iterateMethodBigM(
+              currentSimplexBoard
+            ) as SimplexBoard)
+          );
+        }
+      } else {
+        let newRamification: SimplexBoard[] = []; 
+        
+        currentSimplexBoard = currentSimplexBoard.map((simplexBoard) => {
+
+          while (simplexBoard.hasNegativeCoefficientsInZ()) {
+            simplexBoards.push(
+              (currentSimplexBoard = iterateMethodBigM(
+                simplexBoard
+              ) as SimplexBoard)
+            );
+          }
+        });
+
+        simplexBoards.push(newRamification as SimplexBoard[]);
+      }
     } catch (e) {
       if (e instanceof Error) {
-        if (e.message === SimplexErrorsCodes.NOT_OPERABLE_OPERANDS)
+        if (e.message === SimplexErrorCodes.NOT_OPERABLE_OPERANDS)
           return self.postMessage(new Error(e.message));
       }
     }
@@ -56,7 +77,7 @@ self.addEventListener(
     console.log(boards);
 
     // const output: OutputSimplex = {
-    //   boards,
+    //   boards: simplexBoards,
     //   optimalSolution,
     //   optimalValues,
     //   reformulation: reformulation!,

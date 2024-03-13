@@ -1,13 +1,12 @@
-import { RationalNumber } from "../../../interfaces/Fraction";
+import { TermM } from "./TermM";
 import { CoefficientMethodBigM } from "../../../interfaces/Simplex";
 import {
   BasicArithmeticOperations,
   MultiplicativeOperations,
 } from "../../helpers/basicOperations";
 import { Equality, operateBetweenRationalNumbers } from "./Equality";
-import { TermM } from "./TermM";
 
-export class RowNumber {
+export class BoardComponent{
   coefficients: CoefficientMethodBigM[];
 
   constructor(coefficients: Equality | CoefficientMethodBigM[]) {
@@ -19,12 +18,21 @@ export class RowNumber {
       ];
     else this.coefficients = coefficients;
   }
+}
+
+export class RowNumber extends BoardComponent {
+  constructor(
+    coefficients: Equality | CoefficientMethodBigM[],
+    public rowIndex?: number
+  ) {
+    super(coefficients);
+  }
 
   operate(
     operation: MultiplicativeOperations,
-    operand: RationalNumber | TermM,
+    operand: CoefficientMethodBigM,
     modifyOriginal = false
-  ): RowNumber {
+  ): RowNumber{
     const coefficients = [
       ...this.coefficients.map((coefficient) =>
         operateBetweenCoefficientOfMethodBigM(
@@ -43,6 +51,41 @@ export class RowNumber {
 
     return new RowNumber(coefficients);
   }
+
+}
+
+export class ColumnNumber extends BoardComponent {
+  constructor(
+    coefficients: Equality | CoefficientMethodBigM[],
+    public columnIndex?: number
+  ) {
+    super(coefficients);
+  }
+
+  operate(
+    operation: MultiplicativeOperations,
+    operand: CoefficientMethodBigM,
+    modifyOriginal = false
+  ): ColumnNumber{
+    const coefficients = [
+      ...this.coefficients.map((coefficient) =>
+        operateBetweenCoefficientOfMethodBigM(
+          operation,
+          false,
+          coefficient,
+          operand
+        )
+      ),
+    ];
+
+    if (modifyOriginal) {
+      this.coefficients = coefficients;
+      return this;
+    }
+
+    return new ColumnNumber(coefficients);
+  }
+
 }
 
 export function operateBetweenCoefficientOfMethodBigM(

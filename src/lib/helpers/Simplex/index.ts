@@ -4,13 +4,14 @@ import {
   LinealTerm,
   LinealTermsEquality,
   RESTRICTION_COEFFICIENTS,
+  RIGHT_SIDE_NAME,
   Reformulation,
   VariableName,
   Z_ADDITIONAL_VARIABLES_COEFFICIENTS,
 } from "../../../interfaces/Simplex";
-import { Board } from "../../utils/Simplex/Board";
+import { SimplexBoard } from "../../utils/Simplex/Board";
 import { Equality } from "../../utils/Simplex/Equality";
-import { RowNumber } from "../../utils/Simplex/RowNumber";
+import { RowNumber } from "../../utils/Simplex/BoardComponents";
 
 export function assembleReformulation({
   numberOfVariables,
@@ -27,7 +28,7 @@ export function assembleReformulation({
 
   // const Z_COEFFICIENTS = {
   //   Z: 1,
-  //   Sol: 0,
+  //   [RIGHT_SIDE_NAME]: 0,
   //   ...(type !== "objetiveValue"
   //     ? Z_ADDITIONAL_VARIABLES_COEFFICIENTS[type]
   //     : {}),
@@ -35,7 +36,7 @@ export function assembleReformulation({
 
   const Z_COEFFICIENTS = {
     Z: 1,
-    Sol: 0,
+    [RIGHT_SIDE_NAME]: 0,
     ...Z_ADDITIONAL_VARIABLES_COEFFICIENTS[type],
   };
 
@@ -65,7 +66,7 @@ export function assembleReformulation({
   });
 
   //Agregando la columna de solucion
-  columnNames.push({ letter: "Sol" });
+  columnNames.push({ letter: RIGHT_SIDE_NAME });
 
   const objetiveFunctionOutput = new Equality({
     linealTerms: {
@@ -73,7 +74,7 @@ export function assembleReformulation({
       right: [
         ...columnNames.flatMap((columnName) => {
           if (
-            columnName.letter === "Sol" ||
+            columnName.letter === RIGHT_SIDE_NAME ||
             columnName.letter === "E" ||
             columnName.letter === "Z" ||
             columnName.letter === "S"
@@ -99,7 +100,10 @@ export function assembleReformulation({
       const linealTerms: LinealTermsEquality = {
         left: [
           ...columnNames.flatMap((columnName) => {
-            if (columnName.letter === "Z" || columnName.letter === "Sol")
+            if (
+              columnName.letter === "Z" ||
+              columnName.letter === RIGHT_SIDE_NAME
+            )
               return [];
 
             if (
@@ -144,7 +148,7 @@ export function assembleReformulation({
   return reformulation;
 }
 
-export function assembleFirstBoard({
+export function assembleFirstSimplexBoard({
   type,
   columnNames,
   objetiveFunction,
@@ -156,8 +160,8 @@ export function assembleFirstBoard({
   // Armando la primera fila
   //Haciendo las respectivas operaciones con la GRAN M
   const firstRowNumberEquation: Equality =
-    type === "maximization"
-      ? objetiveFunction.operate("multiply", -1).clearIndependentTerm("right")
+    type === "minimization"
+      ? objetiveFunction.operate("*", -1).clearIndependentTerm("right")
       : objetiveFunction.clearIndependentTerm("right");
 
   const firstRowNumber = new RowNumber(
@@ -172,7 +176,7 @@ export function assembleFirstBoard({
       (restriction) =>
         new RowNumber(
           columnNames.map((columnName) => {
-            if (columnName.letter === "Sol")
+            if (columnName.letter === RIGHT_SIDE_NAME)
               return restriction.independentTerm?.value ?? 0;
             return restriction.coefficientOf(columnName);
           })
@@ -180,7 +184,7 @@ export function assembleFirstBoard({
     ),
   ];
 
-  const firstBoard: Board = new Board({
+  const firstBoard: SimplexBoard = new SimplexBoard({
     columnNames,
     rowNames,
     rowNumbers,
@@ -189,9 +193,52 @@ export function assembleFirstBoard({
   return firstBoard;
 }
 
-export function iterateMethodBigM(initialBoard: Board): Board{
+export function iterateMethodBigM(
+  previousSimplexBoard: SimplexBoard
+): SimplexBoard | SimplexBoard[] {
+  //Copiando la tabla anterior
+  const currentSimplexBoard = structuredClone(previousSimplexBoard);
+
+  //Obteniendo todas las variables basicas que aun tienen coeficiente M
+  const basicVariablesWithCoefficientMInZ =
+    currentSimplexBoard.getBasicVariablesWhoHasCoefficientMInZ();
+
+  //Volviendo a 0 los coeficientes M
+  if (basicVariablesWithCoefficientMInZ) {
+    basicVariablesWithCoefficientMInZ.forEach((basicVariableName) => {});
+  }
+
+  //Pasando todas las propiedades necesarias para continuar las operaciones
+  const { columnNames, rowNames, nextOperationsBetweenRowsColumn, rowNumbers } =
+    currentSimplexBoard;
+
+  return new SimplexBoard({
+    columnNames,
+    rowNames,
+    rowNumbers,
+    nextOperationsBetweenRowsColumn,
+  });
+}
 
 
 
+export function allBranchesOptimized(simplexBoards: SimplexBoard): boolean {
+  let isAllBranchesOptimized = true;
 
+  function traverseBranches(sB: SimplexBoard) {
+    if (Array.isArray(sB)) {
+      for (const simplexBoard of sB) {
+        traverseBranches(simplexBoard);
+        if (!isAllBranchesOptimized) return; // Detener recursión si ya se encontró una rama no optimizada
+      }
+    } else {
+      if (sB.hasNegativeCoefficientsInZ()) {
+        isAllBranchesOptimized = false;
+      }
+    }
+  }
+
+  traverseBranches(simplexBoards);
+
+  return isAllBranchesOptimized;
 }

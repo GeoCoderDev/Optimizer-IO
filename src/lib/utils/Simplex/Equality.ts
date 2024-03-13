@@ -11,6 +11,7 @@ import {
   MultiplicativeOperations,
   basicArithmeticOperation,
 } from "../../helpers/basicOperations";
+import { operateBetweenCoefficientOfMethodBigM } from "./BoardComponents";
 
 export function operateAllCoefficients(
   linealTerms: LinealTerm[],
@@ -18,7 +19,7 @@ export function operateAllCoefficients(
   operand: RationalNumber
 ) {
   return linealTerms.map(({ coefficient, variableName }) => {
-    const newCoefficient = operateBetweenRationalNumbers(
+    const newCoefficient = operateBetweenCoefficientOfMethodBigM(
       operation,
       false,
       coefficient,
@@ -37,9 +38,7 @@ export function operateBetweenRationalNumbers(
   inverse = false,
   ...operands: RationalNumber[]
 ): RationalNumber {
-  const rationalNumbersArgs = inverse
-    ? operands.reverse()
-    : operands;
+  const rationalNumbersArgs = inverse ? operands.reverse() : operands;
 
   return rationalNumbersArgs.reduce((acum, val) => {
     let result;
@@ -87,7 +86,7 @@ export class Equality {
   ): Equality {
     const linealTerms: LinealTermsEquality = {
       left: operateAllCoefficients(this.linealTerms.left, operation, operand),
-      right: operateAllCoefficients(this.linealTerms.left, operation, operand),
+      right: operateAllCoefficients(this.linealTerms.right, operation, operand),
     };
 
     let independentTerm: typeof this.independentTerm;
@@ -140,7 +139,12 @@ export class Equality {
       ...this.linealTerms[side].map(({ coefficient, variableName }) => {
         const newLinealTerm: LinealTerm = {
           variableName,
-          coefficient: -coefficient,
+          coefficient: operateBetweenCoefficientOfMethodBigM(
+            "-",
+            false,
+            0,
+            coefficient
+          ),
         };
         return newLinealTerm;
       }),
