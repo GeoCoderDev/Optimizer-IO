@@ -1,7 +1,6 @@
 import { FractionProps } from "../utils/Fraction";
 // Función para calcular el máximo común divisor (MCD) usando el algoritmo de Euclides
-export function gcd(a: number, b: number) {  
-
+export function gcd(a: number, b: number) {
   if (b === 0) {
     return a;
   }
@@ -12,7 +11,6 @@ export function getMinimumDivisblesBetween(
   number1: number,
   number2: number
 ): FractionProps {
-  
   // Mientras el numerator no sea entero, multiplicamos por 10
   // el numerator y el denominator
   while (number1 % 1 !== 0) {
@@ -27,5 +25,9 @@ export function getMinimumDivisblesBetween(
   const numerator = number1 / mcd;
   const denominator = number2 / mcd;
 
-  return { numerator, denominator };
+  //Signo siempre en el numerador
+  return {
+    numerator: denominator < 0 ? -numerator : numerator,
+    denominator: Math.abs(denominator),
+  };
 }

@@ -13,7 +13,10 @@ import {
 } from "../../../interfaces/Simplex";
 import { SimplexBoard } from "../../utils/Simplex/Board";
 import { Equality } from "../../utils/Simplex/Equality";
-import { RowNumber } from "../../utils/Simplex/BoardComponents";
+import {
+  RowNumber,
+  RowNumbersArray,
+} from "../../utils/Simplex/BoardComponents";
 import { SimplexErrorCodes } from "../../../errors/Simplex/simplexErrorCodes";
 import { numberToFractionIfItCan } from "../../utils/Fraction";
 
@@ -178,7 +181,7 @@ export function assembleFirstSimplexBoard({
     )
   );
 
-  const rowNumbers: RowNumber[] = [
+  const rowNumbers = new RowNumbersArray([
     firstRowNumber,
     ...restrictions.map(
       (restriction) =>
@@ -190,7 +193,7 @@ export function assembleFirstSimplexBoard({
           })
         )
     ),
-  ];
+  ]);
 
   const firstBoard: SimplexBoard = new SimplexBoard({
     columnNames,
@@ -205,22 +208,29 @@ export function iterateMethodBigM(
   previousSimplexBoard: SimplexBoard
 ): SimplexBoard | SimplexBoardBranches {
   //Obteniendo todas las propiedades necesarias para continuar las operaciones
-  const { rowNames, columnNames, rowNumbers, nextOperationsBetweenRowsColumn } =
-    previousSimplexBoard;
 
-  // Creando la nueva tabla con las operaciones futuras para realizar en el constructor
+  //NO HACER ESTO, SE PIERDEN INSTANCIAS
+  // const { rowNames, columnNames, rowNumbers, futureOperations } =
+  //   previousSimplexBoard;
+
+  // Creando la nueva tabla con las operaciones futuras para realizar en el constructor con nuevas referencias
   const currentSimplexBoard = new SimplexBoard({
-    rowNames,
-    columnNames,
-    rowNumbers,
-    nextOperationsBetweenRowsColumn,
+    rowNames: structuredClone(previousSimplexBoard.rowNames),
+    columnNames: structuredClone(previousSimplexBoard.columnNames),
+    rowNumbers: previousSimplexBoard.rowNumbers.copy(),
+    futureOperations: previousSimplexBoard.futureOperations,
   });
 
-  //Obteniendo todas las variables basicas que aun tienen coeficiente M
+  //==========================================================================
+  //|      PASO 1: Eliminar coeficientes M de la funcion objetivo que        |
+  //|                  pertenezcan a alguna variable basica                  |
+  //==========================================================================
+
+  //Obteniendo todas las variables basicas que aun tienen coeficiente M en Z
   const basicVariablesWithCoefficientMInZ =
     currentSimplexBoard.getBasicVariablesWhoHasCoefficientMInZ();
 
-  //Volviendo a 0 los coeficientes M
+  //Volviendo a 0 todas las variables basicas que aun tienen coeficiente M en Z
   if (basicVariablesWithCoefficientMInZ) {
     basicVariablesWithCoefficientMInZ.forEach((basicVariableName) => {
       currentSimplexBoard.convertCellToZeroInTheFuture(
@@ -230,6 +240,23 @@ export function iterateMethodBigM(
       );
     });
   }
+
+  //==========================================================================
+  //|            PASO 2: Obtener Cociente Menor Positivo para                |
+  //|                 hallar la columna y la fila pivote                     |
+  //==========================================================================
+
+  //===========================================================================
+  //|  PASO 3: Dividir la fila pivote entre el elemento pivote para volverlo  |
+  //|       1 e intecambiar nombre de  la misma por columna pivote            |
+  //===========================================================================
+
+  //===========================================================================
+  //|               PASO 4: Volver 0 los demas elementos de                   |
+  //|                           la columna pivote                             |
+  //===========================================================================
+
+  //ITERACION FINALIZADA
 
   return currentSimplexBoard;
 }
@@ -259,7 +286,10 @@ export function allBranchesOptimized(
         }
       } else traverseBranches(sB[sB.length - 1]);
     } else {
-      if (sB.hasNegativeCoefficientsInZ()) {
+      if (
+        sB.getBasicVariablesWhoHasCoefficientMInZ() !== undefined ||
+        sB.hasNegativeCoefficientsInZ()
+      ) {
         isAllBranchesOptimized = false;
       }
     }

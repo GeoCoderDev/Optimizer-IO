@@ -6,7 +6,7 @@ import {
 } from "../../helpers/basicOperations";
 import { Equality, operateBetweenRationalNumbers } from "./Equality";
 
-export class BoardComponent{
+export class BoardComponent {
   coefficients: CoefficientMethodBigM[];
 
   constructor(coefficients: Equality | CoefficientMethodBigM[]) {
@@ -32,7 +32,7 @@ export class RowNumber extends BoardComponent {
     operation: MultiplicativeOperations,
     operand: CoefficientMethodBigM,
     modifyOriginal = false
-  ): RowNumber{
+  ): RowNumber {
     const coefficients = [
       ...this.coefficients.map((coefficient) =>
         operateBetweenCoefficientOfMethodBigM(
@@ -52,6 +52,21 @@ export class RowNumber extends BoardComponent {
     return new RowNumber(coefficients);
   }
 
+  copy() {
+    return new RowNumber(this.coefficients);
+  }
+}
+
+export class RowNumbersArray {
+  rows: RowNumber[];
+
+  constructor(rows: RowNumber[]) {
+    this.rows = rows;
+  }
+
+  copy() {
+    return new RowNumbersArray(this.rows.map((row) => row.copy()));
+  }
 }
 
 export class ColumnNumber extends BoardComponent {
@@ -66,7 +81,7 @@ export class ColumnNumber extends BoardComponent {
     operation: MultiplicativeOperations,
     operand: CoefficientMethodBigM,
     modifyOriginal = false
-  ): ColumnNumber{
+  ): ColumnNumber {
     const coefficients = [
       ...this.coefficients.map((coefficient) =>
         operateBetweenCoefficientOfMethodBigM(
@@ -85,7 +100,6 @@ export class ColumnNumber extends BoardComponent {
 
     return new ColumnNumber(coefficients);
   }
-
 }
 
 export function operateBetweenCoefficientOfMethodBigM(
@@ -97,11 +111,21 @@ export function operateBetweenCoefficientOfMethodBigM(
     ? operands.reverse()
     : operands;
 
-  return coefficientOfMethodBigMOperand.reduce((acum, val) => {
+  const result = coefficientOfMethodBigMOperand.reduce((acum, val) => {
     if (acum instanceof TermM) return acum.operateWith(operation, val);
 
     if (val instanceof TermM) return val.operateWith(operation, acum, true);
 
-    return operateBetweenRationalNumbers(operation, inverse, acum, val);
+    return operateBetweenRationalNumbers(operation, false, acum, val);
   });
+
+  console.log(
+    "operateBetweenCoefficientOfMethodBigM: Resultado",
+    operation,
+    inverse,
+    operands,
+    result
+  );
+
+  return result;
 }

@@ -38,20 +38,27 @@ export function operateBetweenRationalNumbers(
   inverse = false,
   ...operands: RationalNumber[]
 ): RationalNumber {
+  
+
   const rationalNumbersArgs = inverse ? operands.reverse() : operands;
 
-  return rationalNumbersArgs.reduce((acum, val) => {
+  const newResult = rationalNumbersArgs.reduce((acum, val) => {
     let result;
     if (typeof acum === "number") {
-      if (typeof val === "number")
+      if (typeof val === "number") {
         result = basicArithmeticOperation(operation, false, acum, val);
-      else result = val.operateWith(operation, acum, true);
+      } else {
+        result = val.operateWith(operation, acum, true);
+      }
     } else {
       result = acum.operateWith(operation, val);
     }
 
     return result;
   });
+
+  
+  return newResult;
 }
 
 export class Equality {

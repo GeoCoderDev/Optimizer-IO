@@ -244,13 +244,13 @@ export const RESTRICTION_COEFFICIENTS = {
 export const Z_ADDITIONAL_VARIABLES_COEFFICIENTS_MAX: AdditionalVariablesValues =
   {
     S: 0,
-    A: new TermM(1),
+    A: new TermM(-1),
     E: 0,
   };
 export const Z_ADDITIONAL_VARIABLES_COEFFICIENTS_MIN: AdditionalVariablesValues =
   {
     S: 0,
-    A: new TermM(-1),
+    A: new TermM(1),
     E: 0,
   };
 

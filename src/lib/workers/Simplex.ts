@@ -1,9 +1,6 @@
 // worker.ts
 import { SimplexErrorCodes } from "../../errors/Simplex/simplexErrorCodes";
-import {
-  InputSimplex,
-  SimplexBoardBranches,
-} from "../../interfaces/Simplex";
+import { InputSimplex, SimplexBoardBranches } from "../../interfaces/Simplex";
 import {
   allBranchesOptimized,
   assembleFirstSimplexBoard,
@@ -36,22 +33,30 @@ self.addEventListener(
     const firstBoard = assembleFirstSimplexBoard(reformulation!);
 
     const simplexBoards: (SimplexBoard | SimplexBoardBranches)[] = [
-      firstBoard!,
+      firstBoard!
     ];
     // let currentSimplexBoard: SimplexBoard | SimplexBoard[] = firstBoard!;
 
     try {
-      while (!allBranchesOptimized(simplexBoards)) {
+      for (let i = 1; i <= 2; i++) {
         const lastBoardOrRamification = simplexBoards[simplexBoards.length - 1];
-        if (Array.isArray(lastBoardOrRamification))
-          iterateAllBranches(lastBoardOrRamification);
-        else simplexBoards.push(iterateMethodBigM(lastBoardOrRamification));
+        simplexBoards.push(
+          iterateMethodBigM(lastBoardOrRamification as SimplexBoard)
+        );
       }
+
+      // while (!allBranchesOptimized(simplexBoards)) {
+      //   const lastBoardOrRamification = simplexBoards[simplexBoards.length - 1];
+      //   if (Array.isArray(lastBoardOrRamification))
+      //     iterateAllBranches(lastBoardOrRamification);
+      //   else simplexBoards.push(iterateMethodBigM(lastBoardOrRamification));
+      // }
     } catch (e) {
       if (e instanceof Error) {
         if (e.message === SimplexErrorCodes.NOT_OPERABLE_OPERANDS)
           return self.postMessage(new Error(e.message));
       }
+      console.log(e);
     }
 
     // try {

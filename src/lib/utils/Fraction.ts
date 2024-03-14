@@ -20,8 +20,10 @@ export class Fraction implements FractionProps {
 
   constructor(data: number | FractionProps) {
     if (typeof data === "number") return Fraction.fractionFrom(data);
-    this.numerator = data.numerator;
-    this.denominator = data.denominator;
+
+    //Pasando el signo negativo al numerador
+    this.numerator = data.denominator < 0 ? -data.numerator : data.numerator;
+    this.denominator = Math.abs(data.denominator);
   }
 
   toNumber(precision?: number): number {
@@ -43,6 +45,7 @@ export class Fraction implements FractionProps {
     let denominator;
 
     if (operation === "+" || operation === "-") {
+      console.log('Aqui una resta o suma\n\n", this,operation, fraction');
       numerator = basicArithmeticOperation(
         operation,
         inverse,
@@ -54,23 +57,23 @@ export class Fraction implements FractionProps {
       if (operation === "*") {
         numerator = basicArithmeticOperation(
           operation,
-          inverse,
+          false,
           this.numerator,
           fraction.numerator
         );
         denominator = basicArithmeticOperation(
           operation,
-          inverse,
+          false,
           this.denominator,
           fraction.denominator
         );
+      } else {
+        numerator = this.numerator * fraction.denominator;
+
+        denominator = this.denominator * fraction.numerator;
+
+        if (inverse) [numerator, denominator] = [denominator, numerator];
       }
-
-      numerator = this.numerator * fraction.denominator;
-
-      denominator = this.denominator * fraction.numerator;
-
-      if (inverse) [numerator, denominator] = [denominator, numerator];
     }
 
     //Reduciendo la fraccion
@@ -103,6 +106,7 @@ export class Fraction implements FractionProps {
     operand: RationalNumber,
     inverse = false
   ) {
+    console.log("operateFractionWith", this, operation, operand);
     if (typeof operand === "number")
       return this.operateWithNumber(operation, operand, inverse);
     return this.operateWithOtherFraction(operation, operand, inverse);
@@ -130,9 +134,7 @@ export class Fraction implements FractionProps {
   }
 }
 
-export function numberToFractionIfItCan(
-  number: number
-): Fraction | number {
+export function numberToFractionIfItCan(number: number): Fraction | number {
   return createFractionIfItCan({ numerator: number, denominator: 1 })!;
 }
 
@@ -147,14 +149,14 @@ export function createFractionIfItCan(
 ): Fraction | number | undefined {
   if (data.numerator === 0 && data.denominator === 0) return undefined;
   if (data.denominator === 0) return data.numerator > 0 ? Infinity : -Infinity;
-  if (data.numerator === 0) return 0;  
+  if (data.numerator === 0) return 0;
 
   const { numerator, denominator } = getMinimumDivisblesBetween(
     data.numerator,
     data.denominator
   );
-  
-  if(denominator===1) return  numerator;  
+
+  if (denominator === 1) return numerator;
 
   return new Fraction({ numerator, denominator });
 }

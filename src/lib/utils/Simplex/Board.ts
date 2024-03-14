@@ -13,6 +13,7 @@ import { TermM } from "./TermM";
 import {
   ColumnNumber,
   RowNumber,
+  RowNumbersArray,
   operateBetweenCoefficientOfMethodBigM,
 } from "./BoardComponents";
 
@@ -32,9 +33,9 @@ export type BoardComponentIdentifier = number | VariableName;
 interface BoardConstructorParams {
   rowNames: VariableName[];
   columnNames: VariableName[];
-  rowNumbers: RowNumber[];
+  rowNumbers: RowNumbersArray;
   minimumQuotientColumn?: MinimumQuotientColumn;
-  nextOperationsBetweenRowsColumn?: FutureOperations;
+  futureOperations?: FutureOperations;
   highlightedColumn?: VariableName[];
   highlightedRows?: VariableName[];
   highlightedCells?: SimplexCell[];
@@ -44,9 +45,9 @@ interface BoardConstructorParams {
 export class Board implements BoardConstructorParams {
   rowNames: VariableName[];
   columnNames: VariableName[];
-  rowNumbers: RowNumber[];
+  rowNumbers: RowNumbersArray;
   minimumQuotientColumn?: MinimumQuotientColumn;
-  nextOperationsBetweenRowsColumn: FutureOperations = {
+  futureOperations: FutureOperations = {
     futureOperations: [],
   };
   highlightedColumn: VariableName[] = [];
@@ -60,7 +61,7 @@ export class Board implements BoardConstructorParams {
     this.rowNumbers = rowNumbers;
 
     //Obteniendo el numero mayor de toda la tabla para valores de M
-    this.rowNumbers.forEach((thisRowNumber) => {
+    this.rowNumbers.rows.forEach((thisRowNumber) => {
       const currentRowNumber = maxCoefficientMethodBigMWithoutMValue(
         ...thisRowNumber.coefficients
       );
@@ -83,7 +84,7 @@ export class SimplexBoard extends Board {
     rowNames,
     columnNames,
     rowNumbers,
-    nextOperationsBetweenRowsColumn,
+    futureOperations,
   }: BoardConstructorParams) {
     super({
       rowNames,
@@ -92,47 +93,57 @@ export class SimplexBoard extends Board {
     });
 
     //Comprobando si hay operaciones pendientes entre filas y realizandolas
-    if (nextOperationsBetweenRowsColumn) {
-      nextOperationsBetweenRowsColumn.futureOperations.forEach(
-        (futureOperation) => {
-          if (futureOperation instanceof OperationBetweenRows) {
-            const { operation, row1, row2 } = futureOperation;
+    console.log(futureOperations);
+    if (futureOperations) {
+      futureOperations.futureOperations.forEach((futureOperation, i) => {
+        if (futureOperation instanceof OperationBetweenRows) {
+          const { operation, row1, row2 } = futureOperation;
+          // if (futureOperation instanceof ConvertCellInZeroWithOtherRow) {
+          //   const { columnIndexToConvertToZeroInRow1 } = futureOperation;
 
-            // if (futureOperation instanceof ConvertCellInZeroWithOtherRow) {
-            //   const { columnIndexToConvertToZeroInRow1 } = futureOperation;
+          //   return;
+          // }
 
-            //   return;
-            // }
-            const newRow = this.operateTwoRows(
-              this.getRow(row1.variableName).operate("*", row1.coefficient),
-              operation,
-              this.getRow(row2.variableName).operate("*", row2.coefficient)
-            );
+          const newRow = this.operateTwoRows(
+            this.getRow(row1.variableName).operate("*", row1.coefficient),
+            operation,
 
-            this.setNewRow(row1.variableName, newRow);
-          } else if (futureOperation instanceof CellOfRowInOneOperation) {
-            const row = this.getRow(futureOperation.rowIdentifier);
-            row.operate(
-              "/",
-              row.coefficients[
-                typeof futureOperation.columnIdentifier === "number"
-                  ? futureOperation.columnIdentifier
-                  : this.getIndexOfRowOrColumnByName(
-                      "column",
-                      futureOperation.columnIdentifier
-                    )
-              ],
-              true
-            );
-          } else {
-            //Reemplazando Nombres
-            this.replaceNewRowName(
-              futureOperation.previousName,
-              futureOperation.newName
-            );
-          }
+            this.getRow(row2.variableName).operate("*", row2.coefficient)
+          );
+
+          console.log(
+            "segundafila",
+            this.getRow(row2.variableName).operate("*", row2.coefficient)
+          );
+
+          this.setNewRow(row1.variableName, newRow);
+        } else if (futureOperation instanceof CellOfRowInOneOperation) {
+          const row = this.getRow(futureOperation.rowIdentifier);
+          row.operate(
+            "/",
+            row.coefficients[
+              typeof futureOperation.columnIdentifier === "number"
+                ? futureOperation.columnIdentifier
+                : this.getIndexOfRowOrColumnByName(
+                    "column",
+                    futureOperation.columnIdentifier
+                  )
+            ],
+            true
+          );
+        } else {
+          //Reemplazando Nombres
+          this.replaceNewRowName(
+            futureOperation.previousName,
+            futureOperation.newName
+          );
         }
-      );
+        console.log(
+          `%cfuture\noperation ${i + 1}`,
+          "color:blue;font-family:system-ui;font-size:1rem;font-weight:bold",
+          structuredClone(this)
+        );
+      });
     }
   }
 
@@ -144,8 +155,18 @@ export class SimplexBoard extends Board {
 
     if (rowIndex < 0)
       throw new Error(SimplexErrorCodes.COMPONENT_NOT_FOUND_IN_BOARD);
+    if (rowIndex >= this.rowNames.length)
+      throw new Error(
+        SimplexErrorCodes.INDEX_OUT_OF_RANGE +
+          ` ${
+            typeof rowNameOrIndex === "number"
+              ? rowNameOrIndex
+              : rowNameOrIndex.letter + rowNameOrIndex.number
+          }`
+      );
 
-    return this.rowNumbers[rowIndex];
+    // console.log("getrow",rowIndex,this.rowNumbers[rowIndex]);
+    return this.rowNumbers.rows[rowIndex];
   }
 
   getColumn(columnNameOrIndex: BoardComponentIdentifier): ColumnNumber {
@@ -162,7 +183,7 @@ export class SimplexBoard extends Board {
       throw new Error(SimplexErrorCodes.COMPONENT_NOT_FOUND_IN_BOARD);
 
     const column = new ColumnNumber(
-      this.rowNumbers.map((rowNumber) => {
+      this.rowNumbers.rows.map((rowNumber) => {
         return rowNumber.coefficients[index];
       }),
       index
@@ -178,28 +199,34 @@ export class SimplexBoard extends Board {
     rowIdentifier: BoardComponentIdentifier,
     indexesExcep: number[]
   ): SimplexCell {
+    console.log("getSmallestCellOfARow", rowIdentifier);
+
     const row = this.getRow(rowIdentifier);
 
     const rowIndex =
       typeof rowIdentifier === "number"
         ? rowIdentifier
         : this.getIndexOfRowOrColumnByName("row", rowIdentifier);
+
     let columnIndex: number = 0;
     let smallestValue: CoefficientMethodBigM = Infinity;
 
     row.coefficients.forEach((coeff, index) => {
-      if (indexesExcep.indexOf(index) !== 1) return;
+      if (indexesExcep.indexOf(index) !== -1) return;
       if (
-        comparesCoefficientsMethodBigM(coeff, "<", 0, this.maxNumberInitial)
+        comparesCoefficientsMethodBigM(
+          coeff,
+          "<",
+          smallestValue,
+          this.maxNumberInitial
+        )
       ) {
         columnIndex = index;
         smallestValue = coeff;
       }
     });
 
-    if (!rowIndex)
-      throw new Error(SimplexErrorCodes.COMPONENT_NOT_FOUND_IN_BOARD);
-
+    console.log(smallestValue);
     return {
       rowIndex,
       columnIndex,
@@ -211,6 +238,13 @@ export class SimplexBoard extends Board {
     rowIdentifier: BoardComponentIdentifier,
     columnIdentifier: BoardComponentIdentifier
   ) {
+    // console.log(rowIdentifier, columnIdentifier);
+    console.log(
+      "getValueByRowAndColumnIdentifiers",
+      rowIdentifier,
+      columnIdentifier
+    );
+
     return this.getRow(rowIdentifier).coefficients[
       typeof columnIdentifier === "number"
         ? columnIdentifier
@@ -236,10 +270,11 @@ export class SimplexBoard extends Board {
         : this.getRow(rowOrIdentifier2);
 
     return new RowNumber(
-      firstRow.coefficients.map((c, index) => {
+      firstRow.coefficients.map((coefficient, index) => {
         return operateBetweenCoefficientOfMethodBigM(
           operation,
           false,
+          coefficient,
           secondRow.coefficients[index]
         );
       })
@@ -247,13 +282,17 @@ export class SimplexBoard extends Board {
   }
 
   addFutureOperation(futureOperation: FutureOperation) {
-    this.nextOperationsBetweenRowsColumn.futureOperations.push(futureOperation);
+    this.futureOperations.futureOperations.push(futureOperation);
   }
 
   multiplicateRowWithCoefficientMethodBigMInTheFuture(
     rowIdentifier: BoardComponentIdentifier,
     coefficientMethodBigM: CoefficientMethodBigM
   ) {
+    console.log(
+      "multiplicateRowWithCoefficientMethodBigMInTheFuture",
+      rowIdentifier
+    );
     this.getRow(rowIdentifier).operate("/", coefficientMethodBigM);
   }
 
@@ -272,12 +311,17 @@ export class SimplexBoard extends Board {
   convertCellToZeroInTheFuture(
     rowIdentifier: BoardComponentIdentifier,
     columnIdentifier: BoardComponentIdentifier,
-    rowToUse: BoardComponentIdentifier
+    rowToUse: BoardComponentIdentifier,
+    coefficientShouldBeOne = false
   ): void {
-    if (
-      this.getValueByRowAndColumnIdentifiers(rowToUse, columnIdentifier) !== 1
-    )
-      throw new Error(SimplexErrorCodes.COEFFICIENT_SHOULD_BE_ONE);
+    if (coefficientShouldBeOne) {
+      if (
+        this.getValueByRowAndColumnIdentifiers(rowToUse, columnIdentifier) !== 1
+      )
+        throw new Error(SimplexErrorCodes.COEFFICIENT_SHOULD_BE_ONE);
+    }
+
+    console.log("convertCellToZeroInTheFuture");
 
     const firstRowName =
       typeof rowIdentifier === "number"
@@ -339,6 +383,8 @@ export class SimplexBoard extends Board {
           : this.getIndexOfRowOrColumnByName("column", columnIdentifier),
     });
 
+    console.log(newFutureOperation);
+
     this.addFutureOperation(newFutureOperation);
   }
 
@@ -365,9 +411,8 @@ export class SimplexBoard extends Board {
       index = rowIdentifier;
     } else index = this.getIndexOfRowOrColumnByName("row", rowIdentifier);
 
-    if (!index) throw new Error(SimplexErrorCodes.INDEX_NOT_FOUND);
-
-    this.rowNumbers[index] = newRow;
+    console.log("setNewRow", index);
+    this.rowNumbers.rows[index] = newRow;
   }
 
   getIndexOfRowOrColumnByName(
@@ -375,17 +420,19 @@ export class SimplexBoard extends Board {
     name: VariableName
   ): number {
     let index;
-    if (BoardcomponentType === "column")
+    if (BoardcomponentType === "column") {
       index = this.columnNames.findIndex(
         ({ letter, number }) => name.letter === letter && name.number === number
       );
-    else
-      index = this.columnNames.findIndex(
+    } else {
+      index = this.rowNames.findIndex(
         ({ letter, number }) => name.letter === letter && name.number === number
       );
+    }
 
-    if (index === -1)
+    if (index === -1) {
       throw new Error(SimplexErrorCodes.COMPONENT_NOT_FOUND_IN_BOARD);
+    }
     return index;
   }
 
@@ -393,21 +440,30 @@ export class SimplexBoard extends Board {
 
   // }
 
+  /**
+   * Este metodo devuelve todas las variables basicas que aun tienen coeficiente
+   * M en Z, si no hay ninguna se devuelve undefined
+   */
   getBasicVariablesWhoHasCoefficientMInZ(): VariableName[] | undefined {
     const basicVariables: VariableName[] = [];
 
     const objetiveFunction = this.getRow(0);
 
+    console.log(
+      "getBasicVariablesWhoHasCoefficientMInZ",
+      "objetiveFunction",
+      objetiveFunction
+    );
+
     this.rowNames.forEach((rownName) => {
       const columnIndex = this.getIndexOfRowOrColumnByName("column", rownName);
-
-      if (!columnIndex) return;
 
       //CHEQUEAR BIEN
       if (objetiveFunction.coefficients[columnIndex] instanceof TermM)
         basicVariables.push(rownName);
     });
 
+    console.log("getBasicVariablesWhoHasCoefficientMInZ", basicVariables);
     return basicVariables.length === 0 ? undefined : basicVariables;
   }
 

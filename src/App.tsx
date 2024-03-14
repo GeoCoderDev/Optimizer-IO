@@ -5,6 +5,10 @@ import { InputSimplex } from "./interfaces/Simplex";
 import { RootState } from "./store";
 import { useState } from "react";
 import { WorkerOrders } from "./lib/workers/WorkerOrders";
+import { Fraction } from "./lib/utils/Fraction";
+import { operateBetweenRationalNumbers } from "./lib/utils/Simplex/Equality";
+import { operateBetweenCoefficientOfMethodBigM } from "./lib/utils/Simplex/BoardComponents";
+import { MixedNumberWithTermM, TermM } from "./lib/utils/Simplex/TermM";
 
 const input: InputSimplex = {
   type: "maximization",
@@ -50,25 +54,35 @@ const input2: InputSimplex = {
 function App() {
   const simplexWorker = useSelector((state: RootState) => state.simplexEvent);
 
-  const [channelAbort, setChannelAbort] = useState<BroadcastChannel | null>(
-    null
-  );
+  // const [channelAbort, setChannelAbort] = useState<BroadcastChannel | null>(
+  //   null
+  // );
 
   return (
     <>
       <h1 className="font-sans text-blue-700">Hola mundo</h1>
       <button
         onClick={() => {
-          const dataSimplex = simplexWorker.addOperation(input);
-          setChannelAbort(dataSimplex.channel);
+          // const dataSimplex = simplexWorker.addOperation(input);
+          // setChannelAbort(dataSimplex.channel);
           simplexWorker.addOperation(input2);
+          console.log(
+            operateBetweenCoefficientOfMethodBigM(
+              "-",
+              false,            
+              new MixedNumberWithTermM({
+                coefficientTermM: 3,
+                independentTerm: -2,
+              }), new TermM(new Fraction(0.35))
+            )
+          );
         }}
       >
         RESOLVER
       </button>
       <button
         onClick={() => {
-          if (channelAbort) channelAbort.postMessage(WorkerOrders.ABORT);
+          // if (channelAbort) channelAbort.postMessage(WorkerOrders.ABORT);
         }}
       >
         Cancelar
