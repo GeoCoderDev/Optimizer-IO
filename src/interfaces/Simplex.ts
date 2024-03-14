@@ -1,6 +1,9 @@
 import { AdditiveOperations } from "../lib/helpers/basicOperations";
 import { comparesRationalNumbers } from "../lib/helpers/operationsRationalNumbers";
-import { SimplexBoard } from "../lib/utils/Simplex/Board";
+import {
+  BoardComponentIdentifier,
+  SimplexBoard,
+} from "../lib/utils/Simplex/Board";
 import {
   Equality,
   operateBetweenRationalNumbers,
@@ -55,10 +58,14 @@ export interface Restriction {
 //OUTPUT SIMPLEX
 export interface OutputSimplex {
   reformulation: Reformulation;
-  boards: (SimplexBoard | SimplexBoard[])[];
+  simplexBoards: (SimplexBoard | SimplexBoardBranches)[];
   optimalValues: number[];
   optimalSolution: number;
 }
+
+export type SimplexBoardBranch = SimplexBoard[];
+
+export type SimplexBoardBranches = SimplexBoardBranch[];
 
 export interface Reformulation {
   columnNames: VariableName[];
@@ -136,10 +143,18 @@ export interface MinimumQuotientColumn {
   cellRowIndexHighlighted: number;
 }
 
-export class OperationBetweenRows {
+interface OperationBetweenRowsContructor {
   row1: LinealTerm;
   row2: LinealTerm;
   operation: AdditiveOperations;
+  resultRowIndex: number;
+}
+
+export class OperationBetweenRows implements OperationBetweenRowsContructor {
+  row1: LinealTerm;
+  row2: LinealTerm;
+  operation: AdditiveOperations;
+  resultRowIndex: number;
   /**
    * Note that the first row is the one that will be modified in the
    * next iteration
@@ -149,20 +164,70 @@ export class OperationBetweenRows {
     row1,
     row2,
     operation,
-  }: {
-    row1: LinealTerm;
-    row2: LinealTerm;
-    operation: AdditiveOperations;
-  }) {
+    resultRowIndex,
+  }: OperationBetweenRowsContructor) {
     this.row1 = row1;
     this.row2 = row2;
     this.operation = operation;
+    this.resultRowIndex = resultRowIndex;
+  }
+
+  toString() {}
+}
+
+export class ConvertCellInZeroWithOtherRow extends OperationBetweenRows {
+  columnIndexToConvertToZeroInRow1: number;
+
+  constructor({
+    operation,
+    resultRowIndex,
+    row1,
+    row2,
+    columnIndexToConvertToZeroInRow1,
+  }: OperationBetweenRowsContructor & {
+    columnIndexToConvertToZeroInRow1: number;
+  }) {
+    super({
+      operation,
+      resultRowIndex,
+      row1,
+      row2,
+    });
+
+    this.columnIndexToConvertToZeroInRow1 = columnIndexToConvertToZeroInRow1;
   }
 }
 
-export interface OperationsBetweenRowsColumn {
-  operationsBetweenRows: (OperationBetweenRows | undefined)[];
+export interface FutureOperations {
+  futureOperations: FutureOperation[];
 }
+
+export interface NewNameRowOperation {
+  previousName: VariableName;
+  newName: VariableName;
+}
+
+export class CellOfRowInOneOperation {
+  rowIdentifier: BoardComponentIdentifier;
+  columnIdentifier: BoardComponentIdentifier;
+
+  constructor({
+    columnIdentifier,
+    rowIdentifier,
+  }: {
+    rowIdentifier: BoardComponentIdentifier;
+    columnIdentifier: BoardComponentIdentifier;
+  }) {
+    this.rowIdentifier = rowIdentifier;
+    this.columnIdentifier = columnIdentifier;
+  }
+}
+
+export type FutureOperation =
+  | OperationBetweenRows
+  | NewNameRowOperation
+  | ConvertCellInZeroWithOtherRow
+  | CellOfRowInOneOperation;
 
 export interface SimplexCell {
   columnIndex: number;

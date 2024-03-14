@@ -1,8 +1,11 @@
 import {
   CoefficientMethodBigM,
+  ConvertCellInZeroWithOtherRow,
+  FutureOperation,
+  FutureOperations,
+  LinealTerm,
   MinimumQuotientColumn,
   OperationBetweenRows,
-  OperationsBetweenRowsColumn,
   SimplexCell,
   VariableName,
 } from "../../../interfaces/Simplex";
@@ -21,15 +24,17 @@ import {
   maxCoefficientMethodBigMWithoutMValue,
 } from "../../helpers/Simplex/operationsCoefficientsMethodBigM";
 import { Fraction } from "../Fraction";
+import { CellOfRowInOneOperation } from "../../../interfaces/Simplex";
 
 export type BoardComponentType = "row" | "column";
+export type BoardComponentIdentifier = number | VariableName;
 
 interface BoardConstructorParams {
   rowNames: VariableName[];
   columnNames: VariableName[];
   rowNumbers: RowNumber[];
   minimumQuotientColumn?: MinimumQuotientColumn;
-  nextOperationsBetweenRowsColumn?: OperationsBetweenRowsColumn;
+  nextOperationsBetweenRowsColumn?: FutureOperations;
   highlightedColumn?: VariableName[];
   highlightedRows?: VariableName[];
   highlightedCells?: SimplexCell[];
@@ -41,8 +46,8 @@ export class Board implements BoardConstructorParams {
   columnNames: VariableName[];
   rowNumbers: RowNumber[];
   minimumQuotientColumn?: MinimumQuotientColumn;
-  nextOperationsBetweenRowsColumn: OperationsBetweenRowsColumn = {
-    operationsBetweenRows: [],
+  nextOperationsBetweenRowsColumn: FutureOperations = {
+    futureOperations: [],
   };
   highlightedColumn: VariableName[] = [];
   highlightedRows: VariableName[] = [];
@@ -88,31 +93,54 @@ export class SimplexBoard extends Board {
 
     //Comprobando si hay operaciones pendientes entre filas y realizandolas
     if (nextOperationsBetweenRowsColumn) {
-      nextOperationsBetweenRowsColumn.operationsBetweenRows.forEach(
-        (operationBetweenRows) => {
-          if (!operationBetweenRows) return;
-          const { operation, row1, row2 } = operationBetweenRows;
-          const newRow = this.operateTwoRows(
-            this.getRow(row1.variableName),
-            operation,
-            this.getRow(row2.variableName)
-          );
+      nextOperationsBetweenRowsColumn.futureOperations.forEach(
+        (futureOperation) => {
+          if (futureOperation instanceof OperationBetweenRows) {
+            const { operation, row1, row2 } = futureOperation;
 
-          this.setNewRow(row1.variableName, newRow);
+            // if (futureOperation instanceof ConvertCellInZeroWithOtherRow) {
+            //   const { columnIndexToConvertToZeroInRow1 } = futureOperation;
+
+            //   return;
+            // }
+            const newRow = this.operateTwoRows(
+              this.getRow(row1.variableName).operate("*", row1.coefficient),
+              operation,
+              this.getRow(row2.variableName).operate("*", row2.coefficient)
+            );
+
+            this.setNewRow(row1.variableName, newRow);
+          } else if (futureOperation instanceof CellOfRowInOneOperation) {
+            const row = this.getRow(futureOperation.rowIdentifier);
+            row.operate(
+              "/",
+              row.coefficients[
+                typeof futureOperation.columnIdentifier === "number"
+                  ? futureOperation.columnIdentifier
+                  : this.getIndexOfRowOrColumnByName(
+                      "column",
+                      futureOperation.columnIdentifier
+                    )
+              ],
+              true
+            );
+          } else {
+            //Reemplazando Nombres
+            this.replaceNewRowName(
+              futureOperation.previousName,
+              futureOperation.newName
+            );
+          }
         }
       );
     }
   }
 
-  getRow(rowNameOrIndex: VariableName | number): RowNumber {
+  getRow(rowNameOrIndex: BoardComponentIdentifier): RowNumber {
     const rowIndex =
       typeof rowNameOrIndex === "number"
         ? rowNameOrIndex
-        : this.rowNames.findIndex(
-            ({ letter, number }) =>
-              rowNameOrIndex.letter === letter &&
-              rowNameOrIndex.number === number
-          );
+        : this.getIndexOfRowOrColumnByName("row", rowNameOrIndex);
 
     if (rowIndex < 0)
       throw new Error(SimplexErrorCodes.COMPONENT_NOT_FOUND_IN_BOARD);
@@ -120,7 +148,7 @@ export class SimplexBoard extends Board {
     return this.rowNumbers[rowIndex];
   }
 
-  getColumn(columnNameOrIndex: VariableName | number): ColumnNumber {
+  getColumn(columnNameOrIndex: BoardComponentIdentifier): ColumnNumber {
     const index =
       typeof columnNameOrIndex === "number"
         ? columnNameOrIndex
@@ -147,15 +175,15 @@ export class SimplexBoard extends Board {
   // getMostPositiveNumberOfAColumn(columnName: VariableName) {}
 
   getSmallestCellOfARow(
-    rowNameOrIndex: VariableName | number,
+    rowIdentifier: BoardComponentIdentifier,
     indexesExcep: number[]
   ): SimplexCell {
-    const row = this.getRow(rowNameOrIndex);
+    const row = this.getRow(rowIdentifier);
 
     const rowIndex =
-      typeof rowNameOrIndex === "number"
-        ? rowNameOrIndex
-        : this.getIndexOfRowOrColumnByName("row", rowNameOrIndex);
+      typeof rowIdentifier === "number"
+        ? rowIdentifier
+        : this.getIndexOfRowOrColumnByName("row", rowIdentifier);
     let columnIndex: number = 0;
     let smallestValue: CoefficientMethodBigM = Infinity;
 
@@ -179,26 +207,33 @@ export class SimplexBoard extends Board {
     };
   }
 
+  getValueByRowAndColumnIdentifiers(
+    rowIdentifier: BoardComponentIdentifier,
+    columnIdentifier: BoardComponentIdentifier
+  ) {
+    return this.getRow(rowIdentifier).coefficients[
+      typeof columnIdentifier === "number"
+        ? columnIdentifier
+        : this.getIndexOfRowOrColumnByName("column", columnIdentifier)
+    ];
+  }
+
   // getSmallestNumberOfAColumn(columnName: VariableName) {}
 
-  // convertCellToZero(
-  //   { columnIndex, rowIndex }: SimplexCell,
-  //   rowToUse?: RowNumber
-  // ): RowNumber {
-  //   if (rowToUse) {
-  //   }
-  //   const columnOfCell = this.getColumn(columnIndex);
-  // }
-
   operateTwoRows(
-    rowOrIndex1: RowNumber | number,
+    rowOrIdentifier1: RowNumber | BoardComponentIdentifier,
     operation: AdditiveOperations,
-    rowOrIndex2: RowNumber | number
+    rowOrIdentifier2: RowNumber | BoardComponentIdentifier
   ): RowNumber {
     const firstRow =
-      typeof rowOrIndex1 === "number" ? this.getRow(rowOrIndex1) : rowOrIndex1;
+      rowOrIdentifier1 instanceof RowNumber
+        ? rowOrIdentifier1
+        : this.getRow(rowOrIdentifier1);
+
     const secondRow =
-      typeof rowOrIndex2 === "number" ? this.getRow(rowOrIndex2) : rowOrIndex2;
+      rowOrIdentifier2 instanceof RowNumber
+        ? rowOrIdentifier2
+        : this.getRow(rowOrIdentifier2);
 
     return new RowNumber(
       firstRow.coefficients.map((c, index) => {
@@ -211,39 +246,134 @@ export class SimplexBoard extends Board {
     );
   }
 
-  addFutureOperationBetweenRows(operationBetweenRows?: OperationBetweenRows) {
-    this.nextOperationsBetweenRowsColumn.operationsBetweenRows.push(
-      operationBetweenRows
-    );
+  addFutureOperation(futureOperation: FutureOperation) {
+    this.nextOperationsBetweenRowsColumn.futureOperations.push(futureOperation);
   }
 
-  setNewRow(
-    rowNameOrIndex: VariableName | number,
-    newRow: RowNumber,
-    newName?: VariableName
+  multiplicateRowWithCoefficientMethodBigMInTheFuture(
+    rowIdentifier: BoardComponentIdentifier,
+    coefficientMethodBigM: CoefficientMethodBigM
+  ) {
+    this.getRow(rowIdentifier).operate("/", coefficientMethodBigM);
+  }
+
+  convertCellToOneInTheFuture(
+    rowIdentifier: BoardComponentIdentifier,
+    columnIdentifier: BoardComponentIdentifier
+  ) {
+    const cellInOneOperation = new CellOfRowInOneOperation({
+      rowIdentifier,
+      columnIdentifier,
+    });
+
+    this.addFutureOperation(cellInOneOperation);
+  }
+
+  convertCellToZeroInTheFuture(
+    rowIdentifier: BoardComponentIdentifier,
+    columnIdentifier: BoardComponentIdentifier,
+    rowToUse: BoardComponentIdentifier
   ): void {
+    if (
+      this.getValueByRowAndColumnIdentifiers(rowToUse, columnIdentifier) !== 1
+    )
+      throw new Error(SimplexErrorCodes.COEFFICIENT_SHOULD_BE_ONE);
+
+    const firstRowName =
+      typeof rowIdentifier === "number"
+        ? this.rowNames[rowIdentifier]
+        : rowIdentifier;
+
+    const row1: LinealTerm = {
+      coefficient: 1,
+      variableName: firstRowName,
+    };
+
+    const intersectionValue = this.getValueByRowAndColumnIdentifiers(
+      rowIdentifier,
+      columnIdentifier
+    );
+
+    let coefficientSecondRow;
+    let operation: AdditiveOperations;
+
+    if (
+      comparesCoefficientsMethodBigM(
+        intersectionValue,
+        "<",
+        0,
+        this.maxNumberInitial
+      )
+    ) {
+      coefficientSecondRow = operateBetweenCoefficientOfMethodBigM(
+        "*",
+        false,
+        intersectionValue,
+        -1
+      );
+      operation = "+";
+    } else {
+      coefficientSecondRow = intersectionValue;
+      operation = "-";
+    }
+
+    const otherRowName =
+      typeof rowToUse === "number" ? this.rowNames[rowToUse] : rowToUse;
+
+    const row2: LinealTerm = {
+      coefficient: coefficientSecondRow,
+      variableName: otherRowName,
+    };
+
+    const newFutureOperation = new ConvertCellInZeroWithOtherRow({
+      operation,
+      resultRowIndex: this.getIndexOfRowOrColumnByName(
+        "row",
+        row1.variableName
+      ),
+      row1,
+      row2,
+      columnIndexToConvertToZeroInRow1:
+        typeof columnIdentifier === "number"
+          ? columnIdentifier
+          : this.getIndexOfRowOrColumnByName("column", columnIdentifier),
+    });
+
+    this.addFutureOperation(newFutureOperation);
+  }
+
+  replaceNewRowName(
+    rowIdentifier: BoardComponentIdentifier,
+    newName: VariableName
+  ) {
+    this.rowNames[
+      typeof rowIdentifier === "number"
+        ? rowIdentifier
+        : this.getIndexOfRowOrColumnByName("row", rowIdentifier)
+    ] = newName;
+  }
+
+  setNewRow(rowIdentifier: BoardComponentIdentifier, newRow: RowNumber): void {
     if (newRow.coefficients.length !== this.columnNames.length)
       throw new Error(SimplexErrorCodes.NEW_ROW_WITH_DIFFERENT_LENGTH);
     let index;
 
-    if (typeof rowNameOrIndex === "number") {
-      if (rowNameOrIndex < 0 || rowNameOrIndex >= this.rowNames.length)
+    if (typeof rowIdentifier === "number") {
+      if (rowIdentifier < 0 || rowIdentifier >= this.rowNames.length)
         throw new Error(SimplexErrorCodes.INDEX_OUT_OF_RANGE);
 
-      index = rowNameOrIndex;
-    } else index = this.getIndexOfRowOrColumnByName("row", rowNameOrIndex);
+      index = rowIdentifier;
+    } else index = this.getIndexOfRowOrColumnByName("row", rowIdentifier);
 
     if (!index) throw new Error(SimplexErrorCodes.INDEX_NOT_FOUND);
 
     this.rowNumbers[index] = newRow;
-
-    if (newName) this.rowNames[index] = newName;
   }
 
   getIndexOfRowOrColumnByName(
     BoardcomponentType: BoardComponentType,
     name: VariableName
-  ): number | undefined {
+  ): number {
     let index;
     if (BoardcomponentType === "column")
       index = this.columnNames.findIndex(
@@ -254,7 +384,8 @@ export class SimplexBoard extends Board {
         ({ letter, number }) => name.letter === letter && name.number === number
       );
 
-    if (index === -1) return;
+    if (index === -1)
+      throw new Error(SimplexErrorCodes.COMPONENT_NOT_FOUND_IN_BOARD);
     return index;
   }
 
@@ -277,7 +408,7 @@ export class SimplexBoard extends Board {
         basicVariables.push(rownName);
     });
 
-    return (basicVariables.length===0)?undefined: basicVariables;
+    return basicVariables.length === 0 ? undefined : basicVariables;
   }
 
   // removeCoefficientsMFromZ() {}

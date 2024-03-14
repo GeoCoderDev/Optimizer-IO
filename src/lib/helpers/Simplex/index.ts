@@ -6,12 +6,16 @@ import {
   RESTRICTION_COEFFICIENTS,
   RIGHT_SIDE_NAME,
   Reformulation,
+  SimplexBoardBranch,
+  SimplexBoardBranches,
   VariableName,
   Z_ADDITIONAL_VARIABLES_COEFFICIENTS,
 } from "../../../interfaces/Simplex";
 import { SimplexBoard } from "../../utils/Simplex/Board";
 import { Equality } from "../../utils/Simplex/Equality";
 import { RowNumber } from "../../utils/Simplex/BoardComponents";
+import { SimplexErrorCodes } from "../../../errors/Simplex/simplexErrorCodes";
+import { numberToFractionIfItCan } from "../../utils/Fraction";
 
 export function assembleReformulation({
   numberOfVariables,
@@ -84,7 +88,9 @@ export function assembleReformulation({
           const linealTerm: LinealTerm = {
             coefficient:
               columnName.letter === "X"
-                ? objetiveFunction[columnName.number! - 1]
+                ? numberToFractionIfItCan(
+                    objetiveFunction[columnName.number! - 1]
+                  )
                 : Z_COEFFICIENTS[columnName.letter],
             variableName: columnName,
           };
@@ -117,7 +123,9 @@ export function assembleReformulation({
             const linealTerm: LinealTerm = {
               coefficient:
                 columnName.letter === "X"
-                  ? coefficients[columnName.number! - 1]
+                  ? numberToFractionIfItCan(
+                      coefficients[columnName.number! - 1]
+                    )
                   : RESTRICTION_COEFFICIENTS[columnName.letter],
               variableName: columnName,
             };
@@ -195,9 +203,18 @@ export function assembleFirstSimplexBoard({
 
 export function iterateMethodBigM(
   previousSimplexBoard: SimplexBoard
-): SimplexBoard | SimplexBoard[] {
-  //Copiando la tabla anterior
-  const currentSimplexBoard = structuredClone(previousSimplexBoard);
+): SimplexBoard | SimplexBoardBranches {
+  //Obteniendo todas las propiedades necesarias para continuar las operaciones
+  const { rowNames, columnNames, rowNumbers, nextOperationsBetweenRowsColumn } =
+    previousSimplexBoard;
+
+  // Creando la nueva tabla con las operaciones futuras para realizar en el constructor
+  const currentSimplexBoard = new SimplexBoard({
+    rowNames,
+    columnNames,
+    rowNumbers,
+    nextOperationsBetweenRowsColumn,
+  });
 
   //Obteniendo todas las variables basicas que aun tienen coeficiente M
   const basicVariablesWithCoefficientMInZ =
@@ -205,32 +222,42 @@ export function iterateMethodBigM(
 
   //Volviendo a 0 los coeficientes M
   if (basicVariablesWithCoefficientMInZ) {
-    basicVariablesWithCoefficientMInZ.forEach((basicVariableName) => {});
+    basicVariablesWithCoefficientMInZ.forEach((basicVariableName) => {
+      currentSimplexBoard.convertCellToZeroInTheFuture(
+        0,
+        basicVariableName,
+        basicVariableName
+      );
+    });
   }
 
-  //Pasando todas las propiedades necesarias para continuar las operaciones
-  const { columnNames, rowNames, nextOperationsBetweenRowsColumn, rowNumbers } =
-    currentSimplexBoard;
-
-  return new SimplexBoard({
-    columnNames,
-    rowNames,
-    rowNumbers,
-    nextOperationsBetweenRowsColumn,
-  });
+  return currentSimplexBoard;
 }
 
-
-
-export function allBranchesOptimized(simplexBoards: SimplexBoard): boolean {
+//LA FORMA DE UN ARRAY DE BOARDS SERA ASI : [sB, sB, sB,[[sB],[sB, sB, sB]]]
+export function allBranchesOptimized(
+  simplexBoards: (SimplexBoard | SimplexBoardBranches)[]
+): boolean {
   let isAllBranchesOptimized = true;
 
-  function traverseBranches(sB: SimplexBoard) {
+  function traverseBranches(
+    sB:
+      | (SimplexBoard | SimplexBoardBranches)[]
+      | SimplexBoard
+      | SimplexBoardBranches
+  ) {
     if (Array.isArray(sB)) {
-      for (const simplexBoard of sB) {
-        traverseBranches(simplexBoard);
-        if (!isAllBranchesOptimized) return; // Detener recursión si ya se encontró una rama no optimizada
-      }
+      //Comprobando si todos son Arrays, si es asi, sera un array de ramificaciones
+      const allSubBoardsAreArrays = sB.every(
+        (subSimplexBoard) => Array.isArray(subSimplexBoard)
+        // && subSimplexBoard instanceof SimplexBoard
+      );
+      if (allSubBoardsAreArrays) {
+        for (const simplexBoard of sB) {
+          if (!isAllBranchesOptimized) return; // Detener recursión si ya se encontró una rama no optimizada
+          traverseBranches(simplexBoard);
+        }
+      } else traverseBranches(sB[sB.length - 1]);
     } else {
       if (sB.hasNegativeCoefficientsInZ()) {
         isAllBranchesOptimized = false;
@@ -241,4 +268,47 @@ export function allBranchesOptimized(simplexBoards: SimplexBoard): boolean {
   traverseBranches(simplexBoards);
 
   return isAllBranchesOptimized;
+}
+
+export function iterateAllBranches(
+  simplexBranches: SimplexBoardBranches
+): void {
+  if (isSimplexBoardBranches(simplexBranches)) {
+    const lastContainer: SimplexBoardBranches =
+      simplexBranches as SimplexBoardBranches;
+
+    lastContainer.forEach((branch) => {
+      const [lastElement] = branch.slice(-1);
+
+      //SubRama encontrada
+      if (Array.isArray(lastElement)) iterateAllBranches(lastElement);
+      else if (lastElement instanceof SimplexBoard)
+        branch.push(iterateMethodBigM(lastElement) as SimplexBoard);
+      else throw new Error(SimplexErrorCodes.BRANCH_NOT_VALID);
+    });
+  } else throw new Error(SimplexErrorCodes.BRANCH_NOT_VALID);
+}
+
+export function isSimplexBoardBranches(
+  array: SimplexBoardBranch | SimplexBoardBranches
+) {
+  return array.every((element) => isSimplexBoardBranch(element));
+}
+
+export function isSimplexBoardBranch(
+  array: SimplexBoardBranch | SimplexBoardBranches | SimplexBoard
+) {
+  if (!Array.isArray(array)) return false;
+
+  const allAreBoardsExceptLast = array
+    .slice(0, -1)
+    .every((element) => element instanceof SimplexBoard);
+
+  const [lastElement] = array.slice(-1);
+
+  const lastAreBoardOrArray =
+    //SubRama de una Rama
+    Array.isArray(lastElement) || lastElement instanceof SimplexBoard;
+
+  return allAreBoardsExceptLast && lastAreBoardOrArray;
 }

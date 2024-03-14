@@ -1,9 +1,14 @@
 // worker.ts
 import { SimplexErrorCodes } from "../../errors/Simplex/simplexErrorCodes";
-import { InputSimplex } from "../../interfaces/Simplex";
 import {
+  InputSimplex,
+  SimplexBoardBranches,
+} from "../../interfaces/Simplex";
+import {
+  allBranchesOptimized,
   assembleFirstSimplexBoard,
   assembleReformulation,
+  iterateAllBranches,
   iterateMethodBigM,
 } from "../helpers/Simplex";
 import { MessageForWorker } from "../utils/CustomEventWorker";
@@ -30,33 +35,17 @@ self.addEventListener(
 
     const firstBoard = assembleFirstSimplexBoard(reformulation!);
 
-    const simplexBoards: SimplexBoard[] = [];
-    let currentSimplexBoard: SimplexBoard | SimplexBoard[] = firstBoard!;
+    const simplexBoards: (SimplexBoard | SimplexBoardBranches)[] = [
+      firstBoard!,
+    ];
+    // let currentSimplexBoard: SimplexBoard | SimplexBoard[] = firstBoard!;
 
     try {
-      if (!Array.isArray(currentSimplexBoard)) {
-        while (currentSimplexBoard.hasNegativeCoefficientsInZ()) {
-          simplexBoards.push(
-            (currentSimplexBoard = iterateMethodBigM(
-              currentSimplexBoard
-            ) as SimplexBoard)
-          );
-        }
-      } else {
-        let newRamification: SimplexBoard[] = []; 
-        
-        currentSimplexBoard = currentSimplexBoard.map((simplexBoard) => {
-
-          while (simplexBoard.hasNegativeCoefficientsInZ()) {
-            simplexBoards.push(
-              (currentSimplexBoard = iterateMethodBigM(
-                simplexBoard
-              ) as SimplexBoard)
-            );
-          }
-        });
-
-        simplexBoards.push(newRamification as SimplexBoard[]);
+      while (!allBranchesOptimized(simplexBoards)) {
+        const lastBoardOrRamification = simplexBoards[simplexBoards.length - 1];
+        if (Array.isArray(lastBoardOrRamification))
+          iterateAllBranches(lastBoardOrRamification);
+        else simplexBoards.push(iterateMethodBigM(lastBoardOrRamification));
       }
     } catch (e) {
       if (e instanceof Error) {
@@ -64,6 +53,38 @@ self.addEventListener(
           return self.postMessage(new Error(e.message));
       }
     }
+
+    // try {
+    //   if (!Array.isArray(currentSimplexBoard)) {
+    //     while (currentSimplexBoard.hasNegativeCoefficientsInZ()) {
+    //       simplexBoards.push(
+    //         (currentSimplexBoard = iterateMethodBigM(
+    //           currentSimplexBoard
+    //         ) as SimplexBoard)
+    //       );
+    //     }
+    //   } else {
+    //     let newRamification: SimplexBoard[] = [];
+
+    //     currentSimplexBoard = currentSimplexBoard.map((simplexBoard) => {
+
+    //       while (simplexBoard.hasNegativeCoefficientsInZ()) {
+    //         simplexBoards.push(
+    //           (currentSimplexBoard = iterateMethodBigM(
+    //             simplexBoard
+    //           ) as SimplexBoard)
+    //         );
+    //       }
+    //     });
+
+    //     simplexBoards.push(newRamification as SimplexBoard[]);
+    //   }
+    // } catch (e) {
+    //   if (e instanceof Error) {
+    //     if (e.message === SimplexErrorCodes.NOT_OPERABLE_OPERANDS)
+    //       return self.postMessage(new Error(e.message));
+    //   }
+    // }
 
     setTimeout(() => {
       if (!aborted) {
@@ -74,10 +95,10 @@ self.addEventListener(
       }
     }, 2000);
 
-    console.log(boards);
+    console.log(simplexBoards);
 
     // const output: OutputSimplex = {
-    //   boards: simplexBoards,
+    //   simplexBoards,
     //   optimalSolution,
     //   optimalValues,
     //   reformulation: reformulation!,

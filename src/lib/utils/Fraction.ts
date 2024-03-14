@@ -4,13 +4,21 @@ import {
   BasicArithmeticOperations,
   basicArithmeticOperation,
 } from "../helpers/basicOperations";
-import { gcd } from "../helpers/greatestCommonDivisor";
+import {
+  gcd,
+  getMinimumDivisblesBetween,
+} from "../helpers/greatestCommonDivisor";
 
-export class Fraction {
+export interface FractionProps {
+  numerator: number;
+  denominator: number;
+}
+
+export class Fraction implements FractionProps {
   numerator: number = 1;
   denominator: number = 1;
 
-  constructor(data: number | { numerator: number; denominator: number }) {
+  constructor(data: number | FractionProps) {
     if (typeof data === "number") return Fraction.fractionFrom(data);
     this.numerator = data.numerator;
     this.denominator = data.denominator;
@@ -112,26 +120,41 @@ export class Fraction {
     });
   }
 
-  static fractionFrom(number: number) {
+  private static fractionFrom(number: number) {
     // Inicializamos el numerador y el denominator con el decimal
-    let numerator = number;
-    let denominator = 1;
 
-    // Mientras el numerator no sea entero, multiplicamos por 10
-    // el numerator y el denominator
-    while (numerator % 1 !== 0) {
-      numerator *= 10;
-      denominator *= 10;
-    }
-
-    // Buscamos el máximo común divisor entre el numerator y el denominator
-    const mcd = gcd(numerator, denominator);
-
-    // Dividimos ambos por el máximo común divisor para simplificar la fracción
-    numerator /= mcd;
-    denominator /= mcd;
+    const { numerator, denominator } = getMinimumDivisblesBetween(number, 1);
 
     // Devolvemos la fracción como un objeto con numerator y denominator
     return new Fraction({ numerator, denominator });
   }
+}
+
+export function numberToFractionIfItCan(
+  number: number
+): Fraction | number {
+  return createFractionIfItCan({ numerator: number, denominator: 1 })!;
+}
+
+/**
+ * Esta funcion devuelve una fraccion con los 2 numeros brindados, puede
+ * ser tambien numero si el denominador es 1 o indefinido si los son 0
+ * @param data
+ * @returns
+ */
+export function createFractionIfItCan(
+  data: FractionProps
+): Fraction | number | undefined {
+  if (data.numerator === 0 && data.denominator === 0) return undefined;
+  if (data.denominator === 0) return data.numerator > 0 ? Infinity : -Infinity;
+  if (data.numerator === 0) return 0;  
+
+  const { numerator, denominator } = getMinimumDivisblesBetween(
+    data.numerator,
+    data.denominator
+  );
+  
+  if(denominator===1) return  numerator;  
+
+  return new Fraction({ numerator, denominator });
 }
