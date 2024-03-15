@@ -1,8 +1,9 @@
-import { IDCounter } from "../../interfaces/IDCounter";
+import { UpCounter } from "../../interfaces/IDCounter";
 
-export class CustomEvent<T> implements IDCounter {
+
+export class CustomEvent<T> implements UpCounter {
   #listeners = new Map<number, (args: T) => void>();
-  IDCounter: number = 1;
+  UpCounter: number = 1;
 
   /**
    * Esta funcion agrega un listener a este evento
@@ -11,8 +12,8 @@ export class CustomEvent<T> implements IDCounter {
    */
   addListener(callback: (args: T) => void) {
     // Agregando el listener al Map de listeners
-    this.#listeners.set(this.IDCounter, callback);
-    return this.IDCounter++;
+    this.#listeners.set(this.UpCounter, callback);
+    return this.UpCounter++;
   }
 
   /**

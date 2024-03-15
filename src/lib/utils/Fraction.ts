@@ -45,7 +45,6 @@ export class Fraction implements FractionProps {
     let denominator;
 
     if (operation === "+" || operation === "-") {
-      console.log('Aqui una resta o suma\n\n", this,operation, fraction');
       numerator = basicArithmeticOperation(
         operation,
         inverse,

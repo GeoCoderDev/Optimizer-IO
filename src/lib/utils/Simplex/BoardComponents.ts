@@ -119,13 +119,13 @@ export function operateBetweenCoefficientOfMethodBigM(
     return operateBetweenRationalNumbers(operation, false, acum, val);
   });
 
-  console.log(
-    "operateBetweenCoefficientOfMethodBigM: Resultado",
-    operation,
-    inverse,
-    operands,
-    result
-  );
+  // console.log(
+  //   "operateBetweenCoefficientOfMethodBigM: Resultado",
+  //   operation,
+  //   inverse,
+  //   operands,
+  //   result
+  // );
 
   return result;
 }

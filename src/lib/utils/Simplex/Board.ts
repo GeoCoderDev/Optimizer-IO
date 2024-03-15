@@ -6,6 +6,8 @@ import {
   LinealTerm,
   MinimumQuotientColumn,
   OperationBetweenRows,
+  OperationOfQuotient,
+  OtherFutureOperations,
   SimplexCell,
   VariableName,
 } from "../../../interfaces/Simplex";
@@ -26,6 +28,7 @@ import {
 } from "../../helpers/Simplex/operationsCoefficientsMethodBigM";
 import { Fraction } from "../Fraction";
 import { CellOfRowInOneOperation } from "../../../interfaces/Simplex";
+import { IterationCounter } from "../../../interfaces/IDCounter";
 
 export type BoardComponentType = "row" | "column";
 export type BoardComponentIdentifier = number | VariableName;
@@ -34,15 +37,14 @@ interface BoardConstructorParams {
   rowNames: VariableName[];
   columnNames: VariableName[];
   rowNumbers: RowNumbersArray;
-  minimumQuotientColumn?: MinimumQuotientColumn;
   futureOperations?: FutureOperations;
-  highlightedColumn?: VariableName[];
-  highlightedRows?: VariableName[];
-  highlightedCells?: SimplexCell[];
-  maxNumberInitial?: number;
+  pivoteColumnIndex?: number;
+  pivoteRowsIndex?: number | number[];
+  pivoteElement?: SimplexCell;
+  iterationNumber?: number;
 }
 
-export class Board implements BoardConstructorParams {
+export class Board implements BoardConstructorParams, IterationCounter {
   rowNames: VariableName[];
   columnNames: VariableName[];
   rowNumbers: RowNumbersArray;
@@ -50,16 +52,25 @@ export class Board implements BoardConstructorParams {
   futureOperations: FutureOperations = {
     futureOperations: [],
   };
-  highlightedColumn: VariableName[] = [];
-  highlightedRows: VariableName[] = [];
-  highlightedCells: SimplexCell[] = [];
-  maxNumberInitial: number = -Infinity;
+  highlightedColumn?: VariableName[] = [];
+  highlightedRows?: VariableName[] = [];
+  highlightedCells?: SimplexCell[] = [];
+  maxNumberInitial!: number;
+  pivoteColumnIndex?: number;
+  pivoteRowsIndex?: number | number[];
+  pivoteElement?: SimplexCell;
+  iterationNumber: number;
 
-  constructor({ rowNames, columnNames, rowNumbers }: BoardConstructorParams) {
+  constructor({
+    rowNames,
+    columnNames,
+    rowNumbers,
+    iterationNumber,
+  }: BoardConstructorParams) {
     this.rowNames = rowNames;
     this.columnNames = columnNames;
     this.rowNumbers = rowNumbers;
-
+    this.iterationNumber = iterationNumber || 0;
     //Obteniendo el numero mayor de toda la tabla para valores de M
     this.rowNumbers.rows.forEach((thisRowNumber) => {
       const currentRowNumber = maxCoefficientMethodBigMWithoutMValue(
@@ -85,19 +96,25 @@ export class SimplexBoard extends Board {
     columnNames,
     rowNumbers,
     futureOperations,
+    pivoteRowsIndex,
+    pivoteColumnIndex,
+    pivoteElement,
+    iterationNumber,
   }: BoardConstructorParams) {
     super({
       rowNames,
       columnNames,
       rowNumbers,
+      iterationNumber,
     });
 
     //Comprobando si hay operaciones pendientes entre filas y realizandolas
     console.log(futureOperations);
     if (futureOperations) {
-      futureOperations.futureOperations.forEach((futureOperation, i) => {
+      futureOperations.futureOperations.forEach((futureOperation) => {
         if (futureOperation instanceof OperationBetweenRows) {
           const { operation, row1, row2 } = futureOperation;
+
           // if (futureOperation instanceof ConvertCellInZeroWithOtherRow) {
           //   const { columnIndexToConvertToZeroInRow1 } = futureOperation;
 
@@ -131,6 +148,35 @@ export class SimplexBoard extends Board {
             ],
             true
           );
+        } else if (
+          futureOperation === OtherFutureOperations.CAN_GET_THE_PIVOT_ELEMENT
+        ) {
+          if (pivoteRowsIndex === undefined)
+            throw new Error(
+              SimplexErrorCodes.INDEX_PIVOT_ROW_SHOULD_BE_DEFINED
+            );
+
+          if (Array.isArray(pivoteRowsIndex))
+            throw new Error(SimplexErrorCodes.ROW_INDEX_NOT_SHOULD_BE_ARRAY);
+
+          this.pivoteElement = {
+            rowIndex: pivoteRowsIndex,
+            columnIndex: pivoteColumnIndex!,
+            value: this.getValueByRowAndColumnIdentifiers(
+              pivoteRowsIndex,
+              pivoteColumnIndex!
+            ),
+          };
+        } else if (
+          futureOperation ===
+          OtherFutureOperations.TRANFORM_PIVOT_ELEMENT_IN_ONE
+        ) {
+          
+          if (pivoteElement === undefined)
+            throw new Error(SimplexErrorCodes.PIVOTE_ELEMENT_SHOULD_BE_DEFINED);
+          console.log(pivoteElement);
+
+
         } else {
           //Reemplazando Nombres
           this.replaceNewRowName(
@@ -138,11 +184,11 @@ export class SimplexBoard extends Board {
             futureOperation.newName
           );
         }
-        console.log(
-          `%cfuture\noperation ${i + 1}`,
-          "color:blue;font-family:system-ui;font-size:1rem;font-weight:bold",
-          structuredClone(this)
-        );
+        // console.log(
+        //   `%cfuture\noperation ${i + 1}`,
+        //   "color:blue;font-family:system-ui;font-size:1rem;font-weight:bold",
+        //   structuredClone(this)
+        // );
       });
     }
   }
@@ -254,6 +300,88 @@ export class SimplexBoard extends Board {
 
   // getSmallestNumberOfAColumn(columnName: VariableName) {}
 
+  /**
+   * Esta funcion generara la columna de los cocientes minimos
+   * y por consiguiente obtendra el indice de la columna pivote
+   * Esta funcion tambien retorna el indice o los indices de las filas pivote
+   */
+  generateColumnOfMinimumQuotientAndGetIndexesPivoteRow() {
+    const mostNegativeElementInZ = this.getSmallestCellOfARow(0, [
+      0,
+      this.columnNames.length - 1,
+    ]);
+
+    if (
+      comparesCoefficientsMethodBigM(
+        mostNegativeElementInZ.value,
+        ">=",
+        0,
+        this.maxNumberInitial
+      )
+    )
+      throw new Error(SimplexErrorCodes.ITERATION_NOT_NECESARY);
+
+    //Guardando el indice de la columna pivote
+    this.pivoteColumnIndex = mostNegativeElementInZ.columnIndex;
+
+    // Calculando la columna de cociente minimo
+    const pivoteColumn = this.getColumn(this.pivoteColumnIndex);
+    const solucionsColumn = this.getColumn(this.columnNames.length - 1);
+
+    // Recorremos todas las soluciones para dividirlas entre las celdas
+    // de la columna pivote
+    const quotientOperations: (OperationOfQuotient | undefined)[] =
+      solucionsColumn.coefficients.map((solutionCoefficient, index) => {
+        //Ignoramos la fila objetivo
+        if (index === 0) return undefined;
+
+        const pivoteCoefficient = pivoteColumn.coefficients[index];
+
+        if (
+          solutionCoefficient instanceof TermM ||
+          pivoteCoefficient instanceof TermM
+        )
+          throw new Error(SimplexErrorCodes.TERM_M_UNWANTED);
+
+        return new OperationOfQuotient({
+          //Aqui vamos a tener que confiar que nunca habra un TermM o derivados
+          //En el dividendo
+          dividend: solutionCoefficient,
+          divisor: pivoteCoefficient,
+        });
+      });
+
+    const valuesOfQuotients = quotientOperations.map(
+      (quotientOperation) => quotientOperation?.result
+    );
+
+    const minorPositiveValueOfQuotients = valuesOfQuotients.reduce(
+      (acum, curr) => {
+        if (curr === undefined) return acum;
+        return curr < acum! ? curr : acum;
+      },
+      Infinity
+    );
+
+    const pivoteRowIndexes = valuesOfQuotients.flatMap((value, index) => {
+      if (value !== minorPositiveValueOfQuotients) return [];
+      return index;
+    });
+
+    const minimumQuotientColumn: MinimumQuotientColumn = {
+      quotientOperations,
+      cellRowIndexHighlighted: pivoteRowIndexes,
+    };
+
+    this.minimumQuotientColumn = minimumQuotientColumn;
+
+    this.addFutureOperation(OtherFutureOperations.CAN_GET_THE_PIVOT_ELEMENT);
+
+    return pivoteRowIndexes.length === 1
+      ? pivoteRowIndexes[0]
+      : pivoteRowIndexes;
+  }
+
   operateTwoRows(
     rowOrIdentifier1: RowNumber | BoardComponentIdentifier,
     operation: AdditiveOperations,
@@ -294,6 +422,19 @@ export class SimplexBoard extends Board {
       rowIdentifier
     );
     this.getRow(rowIdentifier).operate("/", coefficientMethodBigM);
+  }
+
+  useThisIndexPivotRowInTheNextSimplexBoard(index: number): SimplexBoard {
+    const nextSimplexBpard = new SimplexBoard({
+      rowNames: structuredClone(this.rowNames),
+      columnNames: structuredClone(this.columnNames),
+      rowNumbers: this.rowNumbers.copy(),
+      futureOperations: this.futureOperations,
+      pivoteColumnIndex: structuredClone(this.pivoteColumnIndex),
+      pivoteRowsIndex: index,
+    });
+
+    return nextSimplexBpard;
   }
 
   convertCellToOneInTheFuture(
@@ -506,15 +647,24 @@ export class SimplexBoard extends Board {
 
   addHighlightRow(rowName: VariableName) {
     this.testVariableName("row", rowName);
+
+    //Inicializando highlightedRows
+    if (this.highlightedRows === undefined) this.highlightedRows = [];
+
     this.highlightedRows.push(rowName);
   }
 
   addHighlightColumn(columnName: VariableName) {
     this.testVariableName("column", columnName);
+
+    if (this.highlightedColumn === undefined) this.highlightedColumn = [];
+
     this.highlightedColumn.push(columnName);
   }
 
   addHighlightCell(simplexCell: SimplexCell) {
+    if (this.highlightedCells === undefined) this.highlightedCells = [];
+
     if (
       simplexCell.columnIndex < this.columnNames.length &&
       simplexCell.columnIndex >= 0 &&
@@ -523,5 +673,9 @@ export class SimplexBoard extends Board {
     )
       this.highlightedCells.push(simplexCell);
     else throw new Error(SimplexErrorCodes.INDEX_OUT_OF_RANGE);
+  }
+
+  addIteration() {
+    this.iterationNumber++;
   }
 }

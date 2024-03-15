@@ -1,3 +1,7 @@
-export interface IDCounter{
-    IDCounter: number;
+export interface UpCounter{
+    UpCounter: number;
+}
+
+export interface IterationCounter{
+    iterationNumber: number
 }

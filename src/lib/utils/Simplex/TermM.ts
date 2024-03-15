@@ -44,7 +44,7 @@ export class TermM {
     operand: RationalNumber,
     inverse: boolean
   ): CoefficientMethodBigM {
-    console.log("TerM\nWith Rational Number");
+    // console.log("TerM\nWith Rational Number");
 
     if (operation === "*" || operation === "/") {
       const result = operateBetweenRationalNumbers(
@@ -64,7 +64,7 @@ export class TermM {
       ? operateBetweenRationalNumbers(operation, false, 0, this.coefficient)
       : this.coefficient;
 
-    console.log("final", coefficientTermM, independentTerm);
+    // console.log("final", coefficientTermM, independentTerm);
     if (independentTerm === 0) return new TermM(coefficientTermM);
 
     return new MixedNumberWithTermM({
@@ -84,7 +84,7 @@ export class TermM {
       this.coefficient,
       operandTermM.coefficient
     );
-    console.log("TerMWithTermM");
+    // console.log("TerMWithTermM");
     return result === 0 ? 0 : new TermM(result);
   }
 
@@ -93,7 +93,7 @@ export class TermM {
     operandMixedNumberWithTermM: MixedNumberWithTermM,
     inverse: boolean
   ): CoefficientMethodBigM {
-    console.log("TerMWitMixedTermM");
+    // console.log("TerMWitMixedTermM");
     const independentResult = operandMixedNumberWithTermM.independentTerm;
     const coefficientTermM = operateBetweenRationalNumbers(
       operation,
@@ -169,10 +169,10 @@ export class MixedNumberWithTermM extends TermM {
     inverse: boolean
   ): CoefficientMethodBigM {
 
-    console.log(
-      "%cMixed M with rational Number",
-      "color:red;font-family:system-ui;font-size:1rem;-webkit-text-stroke: 1px black;font-weight:bold", this, operation, operand, inverse
-    );
+    // console.log(
+    //   "%cMixed M with rational Number",
+    //   "color:red;font-family:system-ui;font-size:1rem;-webkit-text-stroke: 1px black;font-weight:bold", this, operation, operand, inverse
+    // );
 
     const independentResult = operateBetweenRationalNumbers(
       operation,
@@ -226,10 +226,10 @@ export class MixedNumberWithTermM extends TermM {
     inverse: boolean
   ): CoefficientMethodBigM {    
 
-    console.log(
-      "%cMixedM with TermM",
-      "color:green;font-family:system-ui;font-size:1rem;-webkit-text-stroke: 1px black;font-weight:bold", this, operation, operandTermM, inverse
-    );
+    // console.log(
+    //   "%cMixedM with TermM",
+    //   "color:green;font-family:system-ui;font-size:1rem;-webkit-text-stroke: 1px black;font-weight:bold", this, operation, operandTermM, inverse
+    // );
 
     const independentTerm = operateBetweenRationalNumbers(
       operation,

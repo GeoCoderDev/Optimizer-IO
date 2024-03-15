@@ -1,5 +1,4 @@
 import { AdditiveOperations } from "../lib/helpers/basicOperations";
-import { comparesRationalNumbers } from "../lib/helpers/operationsRationalNumbers";
 import {
   BoardComponentIdentifier,
   SimplexBoard,
@@ -103,44 +102,39 @@ export interface IndependentTermEquality {
 }
 
 export class OperationOfQuotient {
-  rowIndex: number;
   dividend: RationalNumber;
   divisor: RationalNumber;
   result: RationalNumber;
   constructor({
     dividend,
     divisor,
-    rowIndex,
   }: {
-    rowIndex: number;
     dividend: RationalNumber;
     divisor: RationalNumber;
   }) {
-    this.rowIndex = rowIndex;
     this.dividend = dividend;
     this.divisor = divisor;
-
     this.result = operateBetweenRationalNumbers("/", false, dividend, divisor);
   }
 
-  static createOperationOfQuotient({
-    dividend,
-    divisor,
-    rowIndex,
-  }: {
-    rowIndex: number;
-    dividend: RationalNumber;
-    divisor: RationalNumber;
-  }): OperationOfQuotient | undefined {
-    //REGLAS AQUI PARA CONSIDERAR EN EL CONCIENTE MINIMO
-    if (comparesRationalNumbers(divisor, "<", 0)) return; //Regla 1: Divisor no negativo
-    return new OperationOfQuotient({ dividend, divisor, rowIndex });
-  }
+  // static createOperationOfQuotient({
+  //   dividend,
+  //   divisor,
+  //   rowIndex,
+  // }: {
+  //   rowIndex: number;
+  //   dividend: RationalNumber;
+  //   divisor: RationalNumber;
+  // }): OperationOfQuotient | undefined {
+  //   //REGLAS AQUI PARA CONSIDERAR EN EL CONCIENTE MINIMO
+  //   if (comparesRationalNumbers(divisor, "<", 0)) return; //Regla 1: Divisor no negativo
+  //   return new OperationOfQuotient({ dividend, divisor, rowIndex });
+  // }
 }
 
 export interface MinimumQuotientColumn {
   quotientOperations: (OperationOfQuotient | undefined)[];
-  cellRowIndexHighlighted: number;
+  cellRowIndexHighlighted: number[];
 }
 
 interface OperationBetweenRowsContructor {
@@ -223,12 +217,18 @@ export class CellOfRowInOneOperation {
   }
 }
 
+export enum OtherFutureOperations {  
+  CAN_GET_THE_PIVOT_ELEMENT,
+  TRANFORM_PIVOT_ELEMENT_IN_ONE
+}
+
 export type FutureOperation =
   | OperationBetweenRows
   | NewNameRowOperation
   | ConvertCellInZeroWithOtherRow
-  | CellOfRowInOneOperation;
-
+  | CellOfRowInOneOperation
+  | OtherFutureOperations;
+  
 export interface SimplexCell {
   columnIndex: number;
   rowIndex: number;

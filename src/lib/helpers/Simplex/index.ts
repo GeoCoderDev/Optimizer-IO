@@ -3,6 +3,7 @@ import {
   InputSimplex,
   LinealTerm,
   LinealTermsEquality,
+  OtherFutureOperations,
   RESTRICTION_COEFFICIENTS,
   RIGHT_SIDE_NAME,
   Reformulation,
@@ -219,10 +220,18 @@ export function iterateMethodBigM(
     columnNames: structuredClone(previousSimplexBoard.columnNames),
     rowNumbers: previousSimplexBoard.rowNumbers.copy(),
     futureOperations: previousSimplexBoard.futureOperations,
+    pivoteColumnIndex: previousSimplexBoard.pivoteColumnIndex,
+    pivoteRowsIndex: previousSimplexBoard.pivoteRowsIndex,
+    pivoteElement: previousSimplexBoard.pivoteElement,
+    iterationNumber: previousSimplexBoard.iterationNumber,
   });
 
+  //     Este paso normalmente se hace antes de empezar las iteraciones
+  //      Por lo cual aun no se aumentan las iteraciones (No deberia
+  //        repetirse nunca mas, solo con la primera Tabla Simplex)
+  //
   //==========================================================================
-  //|      PASO 1: Eliminar coeficientes M de la funcion objetivo que        |
+  //|      PASO 0: Eliminar coeficientes M de la funcion objetivo que        |
   //|                  pertenezcan a alguna variable basica                  |
   //==========================================================================
 
@@ -231,6 +240,7 @@ export function iterateMethodBigM(
     currentSimplexBoard.getBasicVariablesWhoHasCoefficientMInZ();
 
   //Volviendo a 0 todas las variables basicas que aun tienen coeficiente M en Z
+  // para la siguiente tabla simplex
   if (basicVariablesWithCoefficientMInZ) {
     basicVariablesWithCoefficientMInZ.forEach((basicVariableName) => {
       currentSimplexBoard.convertCellToZeroInTheFuture(
@@ -239,24 +249,72 @@ export function iterateMethodBigM(
         basicVariableName
       );
     });
+
+    return currentSimplexBoard;
   }
 
   //==========================================================================
-  //|            PASO 2: Obtener Cociente Menor Positivo para                |
-  //|                 hallar la columna y la fila pivote                     |
+  //|  PASO 1: Obtener Cociente(s) Menor Positivo para hallar la la columna  |
+  //|       pivote(Aqui se define si habra 2 o mas ramificaciones)           |
   //==========================================================================
 
+  //Solo se hara esto si la fila pivote no esta definida
+  if (currentSimplexBoard.pivoteRowsIndex === undefined) {
+    //Que estemos aqui significa que estamos empezando una nueva iteracion
+    currentSimplexBoard.addIteration();
+
+    //Leer descripcion de la funcion, para mas informacion
+    currentSimplexBoard.pivoteRowsIndex =
+      currentSimplexBoard.generateColumnOfMinimumQuotientAndGetIndexesPivoteRow();
+
+    return currentSimplexBoard;
+  }
+
+  //==========================================================================
+  //            PASO 2:  Aqui se obtiene la columna pivote o las             |
+  //             ramificaciones con diferentes columnas pivote               |
+  //==========================================================================
+
+  if (currentSimplexBoard.pivoteElement === undefined) {
+    if (Array.isArray(currentSimplexBoard.pivoteRowsIndex)) {
+      const ramification: SimplexBoardBranches =
+        currentSimplexBoard.pivoteRowsIndex.map((pivoteRowIndex) => {
+          const simplexBoardBranch: SimplexBoardBranch = [
+            currentSimplexBoard.useThisIndexPivotRowInTheNextSimplexBoard(
+              pivoteRowIndex
+            ),
+          ];
+          return simplexBoardBranch;
+        });
+      return ramification;
+    } else {
+      return currentSimplexBoard.useThisIndexPivotRowInTheNextSimplexBoard(
+        currentSimplexBoard.pivoteRowsIndex
+      );
+    }
+  }
   //===========================================================================
   //|  PASO 3: Dividir la fila pivote entre el elemento pivote para volverlo  |
-  //|       1 e intecambiar nombre de  la misma por columna pivote            |
+  //|        1 e intecambiar nombre de  la misma por columna pivote           |
   //===========================================================================
+
+  if(currentSimplexBoard.pivoteElement.value!==1){
+    currentSimplexBoard.addFutureOperation(OtherFutureOperations.TRANFORM_PIVOT_ELEMENT_IN_ONE)
+  }
 
   //===========================================================================
   //|               PASO 4: Volver 0 los demas elementos de                   |
   //|                           la columna pivote                             |
   //===========================================================================
 
+
+
+
   //ITERACION FINALIZADA
+  //===========================================================================
+  //|          PASO 5: Resetear propiedades a propiedades iniciales           |
+  //===========================================================================
+
 
   return currentSimplexBoard;
 }

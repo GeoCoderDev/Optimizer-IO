@@ -38,7 +38,7 @@ self.addEventListener(
     // let currentSimplexBoard: SimplexBoard | SimplexBoard[] = firstBoard!;
 
     try {
-      for (let i = 1; i <= 2; i++) {
+      for (let i = 1; i <= 4; i++) {
         const lastBoardOrRamification = simplexBoards[simplexBoards.length - 1];
         simplexBoards.push(
           iterateMethodBigM(lastBoardOrRamification as SimplexBoard)
