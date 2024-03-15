@@ -3,7 +3,7 @@ import "./index.css";
 import { InputSimplex } from "./interfaces/Simplex";
 
 import { RootState } from "./store";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { WorkerOrders } from "./lib/workers/WorkerOrders";
 import { Fraction } from "./lib/utils/Fraction";
 import { operateBetweenCoefficientOfMethodBigM } from "./lib/utils/Simplex/BoardComponents";
@@ -53,28 +53,37 @@ const input2: InputSimplex = {
 function App() {
   const simplexWorker = useSelector((state: RootState) => state.simplexEvent);
 
-  const [channelAbort, setChannelAbort] = useState<BroadcastChannel | null>(
-    null
-  );
+  // const [channelAbort, setChannelAbort] = useState<BroadcastChannel | null>(
+  //   null
+  // );
+
+  
 
   return (
     <>
       <h1 className="font-sans text-blue-700">Hola mundo</h1>
       <button
         onClick={() => {
-          const dataSimplex = simplexWorker.addOperation(input);
-          setChannelAbort(dataSimplex.channel);
-          simplexWorker.addOperation(input2);
-          console.log(
-            operateBetweenCoefficientOfMethodBigM(
-              "-",
-              false,            
-              new MixedNumberWithTermM({
-                coefficientTermM: 3,
-                independentTerm: -2,
-              }), new TermM(new Fraction(0.35))
-            )
-          );
+          // const dataSimplex = simplexWorker.addOperation(input);
+          // setChannelAbort(dataSimplex.channel);
+          const dataSimplex2 = simplexWorker.addOperation(input2);
+
+
+
+          // console.log(
+          //   operateBetweenCoefficientOfMethodBigM(
+          //     "-",
+          //     true,
+          //     new MixedNumberWithTermM({
+          //       coefficientTermM: new Fraction({
+          //         numerator: 135,
+          //         denominator: 4,
+          //       }),
+          //       independentTerm: -2250,
+          //     }),
+          //     new TermM(-39)
+          //   )
+          // );
         }}
       >
         RESOLVER

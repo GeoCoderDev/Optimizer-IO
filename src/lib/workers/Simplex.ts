@@ -33,24 +33,31 @@ self.addEventListener(
     const firstBoard = assembleFirstSimplexBoard(reformulation!);
 
     const simplexBoards: (SimplexBoard | SimplexBoardBranches)[] = [
-      firstBoard!
+      firstBoard!,
     ];
     // let currentSimplexBoard: SimplexBoard | SimplexBoard[] = firstBoard!;
 
     try {
-      for (let i = 1; i <= 4; i++) {
-        const lastBoardOrRamification = simplexBoards[simplexBoards.length - 1];
-        simplexBoards.push(
-          iterateMethodBigM(lastBoardOrRamification as SimplexBoard)
-        );
-      }
-
-      // while (!allBranchesOptimized(simplexBoards)) {
+      // for (let i = 1; i <= 6; i++) {
       //   const lastBoardOrRamification = simplexBoards[simplexBoards.length - 1];
-      //   if (Array.isArray(lastBoardOrRamification))
-      //     iterateAllBranches(lastBoardOrRamification);
-      //   else simplexBoards.push(iterateMethodBigM(lastBoardOrRamification));
+      //   simplexBoards.push(
+      //     iterateMethodBigM(lastBoardOrRamification as SimplexBoard)
+      //   );
       // }
+
+      let whileCounter = 0;
+
+      while (!allBranchesOptimized(simplexBoards)) {
+
+        if (whileCounter > 14) break;
+        
+        const lastBoardOrRamification = simplexBoards[simplexBoards.length - 1];
+        if (Array.isArray(lastBoardOrRamification))
+          iterateAllBranches(lastBoardOrRamification);
+        else simplexBoards.push(iterateMethodBigM(lastBoardOrRamification));
+
+        whileCounter++;
+      }
     } catch (e) {
       if (e instanceof Error) {
         if (e.message === SimplexErrorCodes.NOT_OPERABLE_OPERANDS)

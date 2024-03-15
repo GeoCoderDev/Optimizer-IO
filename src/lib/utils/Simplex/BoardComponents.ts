@@ -110,7 +110,7 @@ export function operateBetweenCoefficientOfMethodBigM(
   const coefficientOfMethodBigMOperand = inverse
     ? operands.reverse()
     : operands;
-
+    
   const result = coefficientOfMethodBigMOperand.reduce((acum, val) => {
     if (acum instanceof TermM) return acum.operateWith(operation, val);
 
@@ -120,11 +120,11 @@ export function operateBetweenCoefficientOfMethodBigM(
   });
 
   // console.log(
-  //   "operateBetweenCoefficientOfMethodBigM: Resultado",
+  //   "%c OperateBetweenCoefficientOfMethodBigM: Resultado","color: magenta; font-size: 0.7rem;",
   //   operation,
-  //   inverse,
   //   operands,
-  //   result
+  //   result,
+  //   inverse,
   // );
 
   return result;

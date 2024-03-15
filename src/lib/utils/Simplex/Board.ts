@@ -107,9 +107,11 @@ export class SimplexBoard extends Board {
       rowNumbers,
       iterationNumber,
     });
-
+    this.pivoteColumnIndex = pivoteColumnIndex;
+    this.pivoteRowsIndex = pivoteRowsIndex;
+    this.pivoteElement = pivoteElement;
     //Comprobando si hay operaciones pendientes entre filas y realizandolas
-    console.log(futureOperations);
+    console.log("%cFuture Operacions:\n","color:greenyellow; font-size: 1rem; text-decoration: underline",futureOperations);
     if (futureOperations) {
       futureOperations.futureOperations.forEach((futureOperation) => {
         if (futureOperation instanceof OperationBetweenRows) {
@@ -151,19 +153,24 @@ export class SimplexBoard extends Board {
         } else if (
           futureOperation === OtherFutureOperations.CAN_GET_THE_PIVOT_ELEMENT
         ) {
-          if (pivoteRowsIndex === undefined)
+          if (this.pivoteRowsIndex === undefined)
             throw new Error(
               SimplexErrorCodes.INDEX_PIVOT_ROW_SHOULD_BE_DEFINED
             );
 
-          if (Array.isArray(pivoteRowsIndex))
+          if (Array.isArray(this.pivoteRowsIndex))
             throw new Error(SimplexErrorCodes.ROW_INDEX_NOT_SHOULD_BE_ARRAY);
 
+          console.log(
+            `%cIndex Received ${this.pivoteRowsIndex}`,
+            "color:dodgerblue; font-size: 1rem; font-style:italic"
+          );
+
           this.pivoteElement = {
-            rowIndex: pivoteRowsIndex,
+            rowIndex: this.pivoteRowsIndex,
             columnIndex: pivoteColumnIndex!,
             value: this.getValueByRowAndColumnIdentifiers(
-              pivoteRowsIndex,
+              this.pivoteRowsIndex,
               pivoteColumnIndex!
             ),
           };
@@ -171,12 +178,18 @@ export class SimplexBoard extends Board {
           futureOperation ===
           OtherFutureOperations.TRANFORM_PIVOT_ELEMENT_IN_ONE
         ) {
-          
-          if (pivoteElement === undefined)
+          if (this.pivoteElement === undefined)
             throw new Error(SimplexErrorCodes.PIVOTE_ELEMENT_SHOULD_BE_DEFINED);
           console.log(pivoteElement);
 
+          const pivoteRow = this.getRow(this.pivoteElement.rowIndex);
 
+          const newPivoteRow = pivoteRow.operate("/", this.pivoteElement.value);
+
+          this.pivoteElement.value =
+            newPivoteRow.coefficients[this.pivoteElement.columnIndex];
+
+          this.setNewRow(this.pivoteElement.rowIndex, newPivoteRow);
         } else {
           //Reemplazando Nombres
           this.replaceNewRowName(
@@ -375,7 +388,7 @@ export class SimplexBoard extends Board {
 
     this.minimumQuotientColumn = minimumQuotientColumn;
 
-    this.addFutureOperation(OtherFutureOperations.CAN_GET_THE_PIVOT_ELEMENT);
+    // this.addFutureOperation(OtherFutureOperations.CAN_GET_THE_PIVOT_ELEMENT);
 
     return pivoteRowIndexes.length === 1
       ? pivoteRowIndexes[0]
@@ -410,6 +423,7 @@ export class SimplexBoard extends Board {
   }
 
   addFutureOperation(futureOperation: FutureOperation) {
+    console.log("%cFuture Operaction Added!", "color: orange", futureOperation)
     this.futureOperations.futureOperations.push(futureOperation);
   }
 
@@ -425,6 +439,11 @@ export class SimplexBoard extends Board {
   }
 
   useThisIndexPivotRowInTheNextSimplexBoard(index: number): SimplexBoard {
+    console.log(
+      `%cUse this index ${index}`,
+      "color:cyan; font-size: 1rem; font-style:italic"
+    );
+
     const nextSimplexBpard = new SimplexBoard({
       rowNames: structuredClone(this.rowNames),
       columnNames: structuredClone(this.columnNames),
@@ -432,8 +451,9 @@ export class SimplexBoard extends Board {
       futureOperations: this.futureOperations,
       pivoteColumnIndex: structuredClone(this.pivoteColumnIndex),
       pivoteRowsIndex: index,
+      pivoteElement: this.pivoteElement,
+      iterationNumber: this.iterationNumber,
     });
-
     return nextSimplexBpard;
   }
 
@@ -590,13 +610,10 @@ export class SimplexBoard extends Board {
 
     const objetiveFunction = this.getRow(0);
 
-    console.log(
-      "getBasicVariablesWhoHasCoefficientMInZ",
-      "objetiveFunction",
-      objetiveFunction
-    );
-
     this.rowNames.forEach((rownName) => {
+      //A EXCEPCION DE X
+      if (rownName.letter === "X") return;
+
       const columnIndex = this.getIndexOfRowOrColumnByName("column", rownName);
 
       //CHEQUEAR BIEN
@@ -654,6 +671,37 @@ export class SimplexBoard extends Board {
     this.highlightedRows.push(rowName);
   }
 
+  isThePivotColumnInItsCorrectShape(): boolean {
+    if (this.pivoteElement === undefined)
+      throw new Error(SimplexErrorCodes.PIVOTE_ELEMENT_SHOULD_BE_DEFINED);
+
+    const pivotRowIndex = this.pivoteElement.rowIndex;
+    const pivotColumnIndex = this.pivoteElement.columnIndex;
+
+    const pivotColumn = this.getColumn(pivotColumnIndex);
+
+    if (pivotColumn.coefficients[this.pivoteElement.rowIndex] !== 1)
+      throw new Error(SimplexErrorCodes.COEFFICIENT_SHOULD_BE_ONE);
+
+    let isTheCorrectShape = true;
+
+    pivotColumn.coefficients.forEach((coefficient, index) => {
+      if (index === pivotRowIndex) return;
+      if (!isTheCorrectShape) return;
+      if (
+        !comparesCoefficientsMethodBigM(
+          coefficient,
+          "=",
+          0,
+          this.maxNumberInitial
+        )
+      )
+        isTheCorrectShape = false;
+    });
+
+    return isTheCorrectShape;
+  }
+
   addHighlightColumn(columnName: VariableName) {
     this.testVariableName("column", columnName);
 
@@ -677,5 +725,14 @@ export class SimplexBoard extends Board {
 
   addIteration() {
     this.iterationNumber++;
+  }
+
+  reset():SimplexBoard{
+    return new SimplexBoard({
+      columnNames: this.columnNames,
+      rowNames: this.rowNames,
+      rowNumbers: this.rowNumbers,
+      iterationNumber: this.iterationNumber,
+    })
   }
 }

@@ -93,14 +93,49 @@ export class TermM {
     operandMixedNumberWithTermM: MixedNumberWithTermM,
     inverse: boolean
   ): CoefficientMethodBigM {
-    // console.log("TerMWitMixedTermM");
-    const independentResult = operandMixedNumberWithTermM.independentTerm;
+    // console.log(
+    //   "%cTerMWitMixedTermM",
+    //   "color:mediumpurple",
+    //   operandMixedNumberWithTermM.independentTerm
+    // );
+
+    const independentResult = operateBetweenRationalNumbers(
+          operation,
+          inverse,
+          0,
+          operandMixedNumberWithTermM.independentTerm
+        );
+
     const coefficientTermM = operateBetweenRationalNumbers(
       operation,
       inverse,
       this.coefficient,
       operandMixedNumberWithTermM.coefficient
     );
+
+    console.log(
+      "%cGETTING DE COEFFICIENT OF TERM RESULT",
+      "color:hotpink;",
+      this.coefficient,
+      operation,
+      operandMixedNumberWithTermM.coefficient,
+      coefficientTermM,
+      inverse
+    );
+
+    // const independentResult = operateBetweenRationalNumbers(
+    //   operation,
+    //   inverse,
+    //   0,
+    //   operandMixedNumberWithTermM.independentTerm
+    // );
+
+    // const coefficientTermM = operateBetweenRationalNumbers(
+    //   operation,
+    //   inverse,
+    //   this.coefficient,
+    //   operandMixedNumberWithTermM.coefficient
+    // );
 
     if (independentResult === 0) {
       if (coefficientTermM === 0) return 0;
@@ -110,7 +145,7 @@ export class TermM {
     if (coefficientTermM === 0) return independentResult;
     return new MixedNumberWithTermM({
       coefficientTermM: coefficientTermM,
-      independentTerm: coefficientTermM,
+      independentTerm: independentResult,
     });
   }
 
@@ -168,12 +203,6 @@ export class MixedNumberWithTermM extends TermM {
     operand: RationalNumber,
     inverse: boolean
   ): CoefficientMethodBigM {
-
-    // console.log(
-    //   "%cMixed M with rational Number",
-    //   "color:red;font-family:system-ui;font-size:1rem;-webkit-text-stroke: 1px black;font-weight:bold", this, operation, operand, inverse
-    // );
-
     const independentResult = operateBetweenRationalNumbers(
       operation,
       inverse,
@@ -224,13 +253,7 @@ export class MixedNumberWithTermM extends TermM {
     operation: AdditiveOperations,
     operandTermM: TermM,
     inverse: boolean
-  ): CoefficientMethodBigM {    
-
-    // console.log(
-    //   "%cMixedM with TermM",
-    //   "color:green;font-family:system-ui;font-size:1rem;-webkit-text-stroke: 1px black;font-weight:bold", this, operation, operandTermM, inverse
-    // );
-
+  ): CoefficientMethodBigM {
     const independentTerm = operateBetweenRationalNumbers(
       operation,
       inverse,
@@ -243,7 +266,7 @@ export class MixedNumberWithTermM extends TermM {
       inverse,
       this.coefficient,
       operandTermM.coefficient
-    );    
+    );
 
     if (coefficientTermM === 0) return this.independentTerm;
     return new MixedNumberWithTermM({ coefficientTermM, independentTerm });

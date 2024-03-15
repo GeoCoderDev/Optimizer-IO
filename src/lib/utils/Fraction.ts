@@ -105,7 +105,7 @@ export class Fraction implements FractionProps {
     operand: RationalNumber,
     inverse = false
   ) {
-    console.log("operateFractionWith", this, operation, operand);
+    // console.log("operateFractionWith", this, operation, operand);
     if (typeof operand === "number")
       return this.operateWithNumber(operation, operand, inverse);
     return this.operateWithOtherFraction(operation, operand, inverse);

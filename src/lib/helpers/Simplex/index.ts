@@ -20,6 +20,7 @@ import {
 } from "../../utils/Simplex/BoardComponents";
 import { SimplexErrorCodes } from "../../../errors/Simplex/simplexErrorCodes";
 import { numberToFractionIfItCan } from "../../utils/Fraction";
+import { comparesCoefficientsMethodBigM } from "./operationsCoefficientsMethodBigM";
 
 export function assembleReformulation({
   numberOfVariables,
@@ -242,6 +243,7 @@ export function iterateMethodBigM(
   //Volviendo a 0 todas las variables basicas que aun tienen coeficiente M en Z
   // para la siguiente tabla simplex
   if (basicVariablesWithCoefficientMInZ) {
+    console.log("%cPaso 0", "color: blue; font-size: 1.5rem");
     basicVariablesWithCoefficientMInZ.forEach((basicVariableName) => {
       currentSimplexBoard.convertCellToZeroInTheFuture(
         0,
@@ -260,6 +262,8 @@ export function iterateMethodBigM(
 
   //Solo se hara esto si la fila pivote no esta definida
   if (currentSimplexBoard.pivoteRowsIndex === undefined) {
+    console.log("%cPaso 1", "color: green; font-size: 1.5rem");
+
     //Que estemos aqui significa que estamos empezando una nueva iteracion
     currentSimplexBoard.addIteration();
 
@@ -276,6 +280,12 @@ export function iterateMethodBigM(
   //==========================================================================
 
   if (currentSimplexBoard.pivoteElement === undefined) {
+    console.log("%cPaso 2", "color: white; font-size: 1.5rem");
+
+    currentSimplexBoard.addFutureOperation(
+      OtherFutureOperations.CAN_GET_THE_PIVOT_ELEMENT
+    );
+
     if (Array.isArray(currentSimplexBoard.pivoteRowsIndex)) {
       const ramification: SimplexBoardBranches =
         currentSimplexBoard.pivoteRowsIndex.map((pivoteRowIndex) => {
@@ -295,11 +305,21 @@ export function iterateMethodBigM(
   }
   //===========================================================================
   //|  PASO 3: Dividir la fila pivote entre el elemento pivote para volverlo  |
-  //|        1 e intecambiar nombre de  la misma por columna pivote           |
+  //|        1 e intecambiar nombre de la misma por columna pivote            |
   //===========================================================================
 
-  if(currentSimplexBoard.pivoteElement.value!==1){
-    currentSimplexBoard.addFutureOperation(OtherFutureOperations.TRANFORM_PIVOT_ELEMENT_IN_ONE)
+  if (currentSimplexBoard.pivoteElement.value !== 1) {
+    console.log("%cPaso 3", "color: yellow; font-size: 1.5rem");
+    currentSimplexBoard.addFutureOperation(
+      OtherFutureOperations.TRANFORM_PIVOT_ELEMENT_IN_ONE
+    );
+    currentSimplexBoard.replaceNewRowName(
+      currentSimplexBoard.pivoteElement.rowIndex,
+      currentSimplexBoard.columnNames[
+        currentSimplexBoard.pivoteElement.columnIndex
+      ]
+    );
+    return currentSimplexBoard;
   }
 
   //===========================================================================
@@ -307,16 +327,47 @@ export function iterateMethodBigM(
   //|                           la columna pivote                             |
   //===========================================================================
 
+  if (!currentSimplexBoard.isThePivotColumnInItsCorrectShape()) {
+    if (currentSimplexBoard.pivoteElement === undefined)
+      throw new Error(SimplexErrorCodes.PIVOTE_ELEMENT_SHOULD_BE_DEFINED);
 
+    console.log("%cPaso 4", "color: salmon; font-size: 1.5rem");
 
+    const pivotRowIndex = currentSimplexBoard.pivoteElement.rowIndex;
+    const pivotColumnIndex = currentSimplexBoard.pivoteElement.columnIndex;
+
+    const pivotColumn = currentSimplexBoard.getColumn(
+      currentSimplexBoard.pivoteElement.columnIndex
+    );
+
+    pivotColumn.coefficients.forEach((coefficient, index) => {
+      if (index === pivotRowIndex) return;
+
+      if (
+        comparesCoefficientsMethodBigM(
+          coefficient,
+          "!=",
+          0,
+          currentSimplexBoard.maxNumberInitial
+        )
+      )
+        currentSimplexBoard.convertCellToZeroInTheFuture(
+          index,
+          pivotColumnIndex,
+          pivotRowIndex
+        );
+    });
+
+    return currentSimplexBoard;
+  }
 
   //ITERACION FINALIZADA
   //===========================================================================
   //|          PASO 5: Resetear propiedades a propiedades iniciales           |
   //===========================================================================
+  console.log("%cPaso 5: RESETEO", "color: fuchsia; font-size: 1.5rem");
+  return currentSimplexBoard.reset();
 
-
-  return currentSimplexBoard;
 }
 
 //LA FORMA DE UN ARRAY DE BOARDS SERA ASI : [sB, sB, sB,[[sB],[sB, sB, sB]]]
