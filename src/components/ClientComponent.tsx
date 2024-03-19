@@ -1,13 +1,9 @@
-import { useSelector } from "react-redux";
-import "./index.css";
-import { InputSimplex } from "./interfaces/Simplex";
+"use client";
 
-import { RootState } from "./store";
-import { useEffect, useState } from "react";
-import { WorkerOrders } from "./lib/workers/WorkerOrders";
-import { Fraction } from "./lib/utils/Fraction";
-import { operateBetweenCoefficientOfMethodBigM } from "./lib/utils/Simplex/BoardComponents";
-import { MixedNumberWithTermM, TermM } from "./lib/utils/Simplex/TermM";
+import { InputSimplex, OutputSimplex } from "@/interfaces/Simplex";
+import { CustomEventWorker } from "@/lib/utils/CustomEventWorker";
+import { WorkerOrders } from "@/lib/workers/WorkerOrders";
+import React, { useState } from "react";
 
 const input: InputSimplex = {
   type: "maximization",
@@ -50,26 +46,30 @@ const input2: InputSimplex = {
   ],
 };
 
-function App() {
-  const simplexWorker = useSelector((state: RootState) => state.simplexEvent);
-
-  // const [channelAbort, setChannelAbort] = useState<BroadcastChannel | null>(
-  //   null
-  // );
-
-  
+const ClientComponent = () => {
+  const [currentChannelAbort, setCurrentChannelAbort] = useState<
+    BroadcastChannel | undefined
+  >();
 
   return (
     <>
       <h1 className="font-sans text-blue-700">Hola mundo</h1>
       <button
         onClick={() => {
+          const currentCustomEventWorker = new CustomEventWorker<
+            InputSimplex,
+            OutputSimplex
+          >(
+            new Worker(new URL("../lib/workers/Simplex.ts", import.meta.url)),
+            "Simplex"
+          );
+
           // const dataSimplex = simplexWorker.addOperation(input);
           // setChannelAbort(dataSimplex.channel);
-          const dataSimplex2 = simplexWorker.addOperation(input2);
-
-
-
+          console.log(currentCustomEventWorker);
+          const dataSimplex2 = currentCustomEventWorker.addOperation(input2);
+          setCurrentChannelAbort(dataSimplex2.channel);
+          console.log(dataSimplex2);
           // console.log(
           //   operateBetweenCoefficientOfMethodBigM(
           //     "-",
@@ -90,13 +90,13 @@ function App() {
       </button>
       <button
         onClick={() => {
-          if (channelAbort) channelAbort.postMessage(WorkerOrders.ABORT);
+          currentChannelAbort?.postMessage(WorkerOrders.ABORT);
         }}
       >
         Cancelar
       </button>
     </>
   );
-}
+};
 
-export default App;
+export default ClientComponent;

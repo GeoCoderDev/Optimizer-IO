@@ -281,6 +281,7 @@ export function iterateMethodBigM(
 
   if (currentSimplexBoard.pivoteElement === undefined) {
     console.log("%cPaso 2", "color: white; font-size: 1.5rem");
+    
 
     currentSimplexBoard.addFutureOperation(
       OtherFutureOperations.CAN_GET_THE_PIVOT_ELEMENT

@@ -451,7 +451,7 @@ export class SimplexBoard extends Board {
       futureOperations: this.futureOperations,
       pivoteColumnIndex: structuredClone(this.pivoteColumnIndex),
       pivoteRowsIndex: index,
-      pivoteElement: this.pivoteElement,
+      pivoteElement: structuredClone(this.pivoteElement),
       iterationNumber: this.iterationNumber,
     });
     return nextSimplexBpard;
