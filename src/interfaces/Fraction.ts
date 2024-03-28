@@ -1,5 +1,3 @@
-import { Fraction } from "../lib/utils/Fraction";
+import { Fraction } from "@/lib/utils/Fraction";
 
 export type RationalNumber = number | Fraction;
-
-

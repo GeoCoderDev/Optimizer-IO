@@ -5,23 +5,23 @@ import { CustomEventWorker } from "@/lib/utils/CustomEventWorker";
 import { WorkerOrders } from "@/lib/workers/WorkerOrders";
 import React, { useState } from "react";
 
-const input: InputSimplex = {
-  type: "maximization",
-  numberOfVariables: 2,
-  objetiveFunction: [8, 6],
-  restrictions: [
-    {
-      coefficients: [2, 1],
-      comparisonSign: ">=",
-      independentTerm: 10,
-    },
-    {
-      coefficients: [3, 8],
-      comparisonSign: "<=",
-      independentTerm: 96,
-    },
-  ],
-};
+// const input: InputSimplex = {
+//   type: "maximization",
+//   numberOfVariables: 2,
+//   objetiveFunction: [8, 6],
+//   restrictions: [
+//     {
+//       coefficients: [2, 1],
+//       comparisonSign: ">=",
+//       independentTerm: 10,
+//     },
+//     {
+//       coefficients: [3, 8],
+//       comparisonSign: "<=",
+//       independentTerm: 96,
+//     },
+//   ],
+// };
 
 const input2: InputSimplex = {
   type: "minimization",
