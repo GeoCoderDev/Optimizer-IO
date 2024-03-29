@@ -10,19 +10,29 @@ const SideBar = () => {
   const dispatch = useDispatch();
 
   const sidebarIsOpened = useSelector(
-    (state: RootState) => state.sidebarIsOpened
+    (state: RootState) => state.flags.sidebarIsOpened
   );
 
-  const headerHeight = useSelector((state: RootState) => state.headerHeight);
-  const windowHeight = useSelector((state: RootState) => state.windowHeight);
+  const headerHeight = useSelector(
+    (state: RootState) => state.elementsDimensions.headerHeight
+  );
+  const windowHeight = useSelector(
+    (state: RootState) => state.elementsDimensions.windowHeight
+  );
+  const windowWidth = useSelector(
+    (state: RootState) => state.elementsDimensions.windowWidth
+  );
+  const animationsDuration = useSelector(
+    (state: RootState) => state.globalConstants.animationsDuration
+  );
 
   return (
     <>
       <nav
         id="sidebar"
-        className="sticky overflow-auto bg-white"
+        className={`sticky overflow-auto bg-white`}
         onClick={() => {
-          if (window.innerWidth < 768) dispatch(switchSidebarIsOpened(null));
+          if (windowWidth < 768) dispatch(switchSidebarIsOpened(null));
         }}
       >
         <ul id="sidebar-ul">
@@ -31,34 +41,39 @@ const SideBar = () => {
           ))}
         </ul>
       </nav>
-      <style>{`
+      <style>{`                
+
+        @keyframes hide-sidebar {
+          0%{
+            display: block;
+            transform: translateX(0%);
+          }
+          99%{
+            display: block;
+            transform: translateX(-100%);
+          }
+
+          100%{
+            transform: translateX(-100%);
+            display: none;
+          }
+        }
 
         #sidebar{
-          transition: all 0.2s;
           width: max-content;
           box-shadow: 1px 0 4px 2px #00000020;
-          top:${headerHeight}px;                 
-          height: ${
-            windowHeight
-              ? windowHeight - headerHeight
-              : window.innerHeight - headerHeight
-          }px;
-          max-height: ${
-            windowHeight
-              ? windowHeight - headerHeight
-              : window.innerHeight - headerHeight
-          }px;
-          display: ${sidebarIsOpened ? "block" : "none"};                      
+          top:${headerHeight}px;                           
+          height: ${windowHeight - headerHeight}px;
+          max-height: ${windowHeight - headerHeight}px;      
+          display: ${
+            sidebarIsOpened ? "block" : "none"
+          };                                 
         }
 
         #sidebar-ul{
-          transition: all 0.2s;
           background-color: white;
           height: 100%;
           width: 100%;
-          transform: ${
-            sidebarIsOpened ? "translateX(0%)" : "translateX(-100%)"
-          };
         }
 
         @media screen and (max-width: 768px){
@@ -68,7 +83,7 @@ const SideBar = () => {
             top: -${headerHeight}px;
             min-height: 100dvh;
             left: 0;        
-            background-color:${sidebarIsOpened ? "#00000050" : "transparent"};
+            background-color:${sidebarIsOpened ? "#00000080" : "transparent"};
             z-index: 102;
           }
 

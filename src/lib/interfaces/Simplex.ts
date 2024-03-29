@@ -1,14 +1,9 @@
-import { AdditiveOperations } from "../lib/helpers/basicOperations";
-import {
-  BoardComponentIdentifier,
-  SimplexBoard,
-} from "../lib/utils/Simplex/Board";
-import {
-  Equality,
-  operateBetweenRationalNumbers,
-} from "../lib/utils/Simplex/Equality";
-import { MixedNumberWithTermM, TermM } from "../lib/utils/Simplex/TermM";
-import { RationalNumber } from "./Fraction";
+import { AdditiveOperations } from "../helpers/basicOperations";
+import { RationalNumber } from "../utils/Fraction";
+import { BoardComponentIdentifier, SimplexBoard } from "../utils/Simplex/Board";
+import { Equality, operateBetweenRationalNumbers } from "../utils/Simplex/Equality";
+import { MixedNumberWithTermM, TermM } from "../utils/Simplex/TermM";
+
 
 //INPUT SIMPLEX
 export const RIGHT_SIDE_NAME = "Sol";

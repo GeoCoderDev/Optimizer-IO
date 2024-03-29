@@ -4,6 +4,8 @@ import "./globals.css";
 import Header from "@/components/Header/Header";
 import ProviderStore from "@/store/Provider";
 import SideBar from "@/components/SideBar/SideBar";
+import React from "react";
+import WrapperMainContent from "@/components/WrapperMainContent/WrapperMainContent";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,8 +33,8 @@ export default function RootLayout({
           <Header />
           <div className="flex relative">
             <SideBar />
-            <main className="-border-2 border-green-400 flex-1">
-              {children}
+            <main className=" flex-1 flex items-center justify-center">
+              <WrapperMainContent>{children}</WrapperMainContent>
             </main>
           </div>
         </ProviderStore>

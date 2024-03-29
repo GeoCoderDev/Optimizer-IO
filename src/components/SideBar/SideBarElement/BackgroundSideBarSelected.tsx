@@ -19,8 +19,8 @@ const BackgroundSideBarSelected = ({ className }: { className: string }) => {
           y2="149"
           gradientUnits="userSpaceOnUse"          
         >
-          <stop stop-color="#16A3EC" />
-          <stop offset="1" stop-color="#22D0B5" />
+          <stop stopColor="#16A3EC" />
+          <stop offset="1" stopColor="#22D0B5" />
         </linearGradient>
       </defs>
     </svg>

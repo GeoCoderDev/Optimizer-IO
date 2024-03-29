@@ -1,15 +1,13 @@
-import headerHeightSlice from "@/state/ElementsDimensions/headerHeight";
-import windowWidthSlice from "@/state/ElementsDimensions/windowWidthSlice";
-import windowHeightSlice from "@/state/ElementsDimensions/windowHeightSlice";
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
-import sidebarIsOpenedSlice from "@/state/Flags/sidebarIsOpenedSlice";
-// Importa otros reductores
+
+import elementsDimensionsReducer from "@/state/ElementDimensions";
+import flagsReducer from "@/state/Flags";
+import globalConstantsReducer from "@/state/Constants";
 
 const rootReducer = combineReducers({
-  windowWidth: windowWidthSlice,
-  windowHeight: windowHeightSlice,
-  headerHeight: headerHeightSlice,
-  sidebarIsOpened: sidebarIsOpenedSlice 
+  elementsDimensions: elementsDimensionsReducer,
+  flags: flagsReducer,
+  globalConstants: globalConstantsReducer,
 });
 
 const store = configureStore({ reducer: rootReducer });

@@ -1,5 +1,5 @@
 import { SimplexErrorCodes } from "../../../errors/Simplex/simplexErrorCodes";
-import { RationalNumber } from "../../../interfaces/Fraction";
+
 import {
   CoefficientMethodBigM,
   NumberPresentationType,
@@ -9,7 +9,7 @@ import {
   BasicArithmeticOperations,
 } from "../../helpers/basicOperations";
 import { comparesRationalNumbers } from "../../helpers/operationsRationalNumbers";
-import { Fraction } from "../Fraction";
+import { Fraction, RationalNumber } from "../Fraction";
 import { operateBetweenCoefficientOfMethodBigM } from "./BoardComponents";
 
 import { operateBetweenRationalNumbers } from "./Equality";

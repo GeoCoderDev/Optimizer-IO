@@ -1,7 +1,6 @@
 import { RationalNumberErrorCodes } from "../../errors/RationalNumbers";
-import { RationalNumber } from "../../interfaces/Fraction";
 import { ComparisonSign } from "../../interfaces/comparisonSigns";
-import { Fraction } from "../utils/Fraction";
+import { Fraction, RationalNumber } from "../utils/Fraction";
 
 export function comparesRationalNumbers(
     rational1: RationalNumber,

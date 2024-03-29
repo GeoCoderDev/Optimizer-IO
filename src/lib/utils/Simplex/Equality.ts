@@ -1,4 +1,4 @@
-import { RationalNumber } from "../../../interfaces/Fraction";
+
 import {
   IndependentTermEquality,
   LinealTerm,
@@ -11,6 +11,7 @@ import {
   MultiplicativeOperations,
   basicArithmeticOperation,
 } from "../../helpers/basicOperations";
+import { RationalNumber } from "../Fraction";
 import { operateBetweenCoefficientOfMethodBigM } from "./BoardComponents";
 
 export function operateAllCoefficients(

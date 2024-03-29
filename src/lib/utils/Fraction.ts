@@ -1,5 +1,5 @@
-import { FractionErrors } from "../../errors/FractionErrors";
-import { RationalNumber } from "../../interfaces/Fraction";
+import { FractionErrors } from "@/lib/errors/FractionErrors";
+
 import {
   BasicArithmeticOperations,
   basicArithmeticOperation,
@@ -159,3 +159,5 @@ export function createFractionIfItCan(
 
   return new Fraction({ numerator, denominator });
 }
+
+export type RationalNumber = number | Fraction;

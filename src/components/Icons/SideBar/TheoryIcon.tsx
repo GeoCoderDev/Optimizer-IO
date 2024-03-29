@@ -1,10 +1,9 @@
-import { IconProps } from "./Icon.interfaces";
+import { IconProps } from "../Icon.interfaces";
 
 const TheoryIcon = ({ className, fillColor }: IconProps) => {
   return (
     <svg
       className={className}
-
       viewBox="0 0 55 43"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

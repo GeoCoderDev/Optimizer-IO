@@ -1,4 +1,4 @@
-import { IconProps } from "./Icon.interfaces";
+import { IconProps } from "../Icon.interfaces";
 
 const NonLinearIcon = ({ className, fillColor }: IconProps) => {
   return (
@@ -11,7 +11,7 @@ const NonLinearIcon = ({ className, fillColor }: IconProps) => {
       <path
         d="M4.31714 49.8738C4.31714 49.8738 10.629 16.8837 27 25.5C46 35.5 49.5534 1.25891 49.5534 1.25891"
         stroke={fillColor}
-        stroke-width="7"
+        strokeWidth="7"
       />
     </svg>
   );

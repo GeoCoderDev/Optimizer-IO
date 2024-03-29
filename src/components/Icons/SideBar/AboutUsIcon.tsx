@@ -1,4 +1,4 @@
-import { IconProps } from "./Icon.interfaces";
+import { IconProps } from "../Icon.interfaces";
 
 const AboutUsIcon = ({ className, fillColor }: IconProps) => {
   return (

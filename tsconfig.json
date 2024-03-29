@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "target": "ES2020",
     "module": "esnext",
-    "noUnusedParameters": true,
+    "noUnusedParameters": false,
     "noUnusedLocals": true,
     "noFallthroughCasesInSwitch": true,
     "moduleResolution": "bundler",

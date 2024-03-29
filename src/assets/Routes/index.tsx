@@ -1,11 +1,11 @@
-import AboutUsIcon from "@/components/Icons/AboutUsIcon";
-import DinamicIcon from "@/components/Icons/DinamicIcon";
-import HomeIcon from "@/components/Icons/HomeIcon";
+import AboutUsIcon from "@/components/Icons/SideBar/AboutUsIcon";
+import DinamicIcon from "@/components/Icons/SideBar/DinamicIcon";
+import HomeIcon from "@/components/Icons/SideBar/HomeIcon";
 import { IconProps } from "@/components/Icons/Icon.interfaces";
-import IntergersIcon from "@/components/Icons/IntergersIcon";
-import LineIcon from "@/components/Icons/LineIcon";
-import NonLinearIcon from "@/components/Icons/NonLinearIcon";
-import TheoryIcon from "@/components/Icons/TheoryIcon";
+import IntergersIcon from "@/components/Icons/SideBar/IntergersIcon";
+import LineIcon from "@/components/Icons/SideBar/LineIcon";
+import NonLinearIcon from "@/components/Icons/SideBar/NonLinearIcon";
+import TheoryIcon from "@/components/Icons/SideBar/TheoryIcon";
 import { ReactElement } from "react";
 
 export interface RouteApp {

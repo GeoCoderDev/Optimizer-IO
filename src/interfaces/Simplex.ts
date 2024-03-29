@@ -1,14 +1,15 @@
-import { AdditiveOperations } from "../lib/helpers/basicOperations";
+import { RationalNumber } from "@/lib/utils/Fraction";
+import { AdditiveOperations } from "@/lib/helpers/basicOperations";
 import {
   BoardComponentIdentifier,
   SimplexBoard,
-} from "../lib/utils/Simplex/Board";
+} from "@/lib/utils/Simplex/Board";
 import {
   Equality,
   operateBetweenRationalNumbers,
-} from "../lib/utils/Simplex/Equality";
-import { MixedNumberWithTermM, TermM } from "../lib/utils/Simplex/TermM";
-import { RationalNumber } from "./Fraction";
+} from "@/lib/utils/Simplex/Equality";
+import { MixedNumberWithTermM, TermM } from "@/lib/utils/Simplex/TermM";
+
 
 //INPUT SIMPLEX
 export const RIGHT_SIDE_NAME = "Sol";
