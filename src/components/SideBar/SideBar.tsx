@@ -22,10 +22,7 @@ const SideBar = () => {
   const windowWidth = useSelector(
     (state: RootState) => state.elementsDimensions.windowWidth
   );
-  const animationsDuration = useSelector(
-    (state: RootState) => state.globalConstants.animationsDuration
-  );
-
+  
   return (
     <>
       <nav
@@ -61,6 +58,7 @@ const SideBar = () => {
 
         #sidebar{
           width: max-content;
+          max-width: 100vw;
           box-shadow: 1px 0 4px 2px #00000020;
           top:${headerHeight}px;                           
           height: ${windowHeight - headerHeight}px;
@@ -79,8 +77,8 @@ const SideBar = () => {
         @media screen and (max-width: 768px){
           #sidebar{
             width: 100vw;
-            position: absolute;
-            top: -${headerHeight}px;
+            position: fixed;
+            top: 0;
             min-height: 100dvh;
             left: 0;        
             background-color:${sidebarIsOpened ? "#00000080" : "transparent"};
@@ -91,6 +89,7 @@ const SideBar = () => {
             background-color: white;
             height: 100%;
             width: max-content;
+            max-width: 80%;
           }
 
         }

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import { RootState } from "@/store";
 import { useSelector } from "react-redux";
 

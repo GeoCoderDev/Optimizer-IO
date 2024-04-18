@@ -3,14 +3,7 @@
 import { AppDispatch, RootState } from "@/store";
 
 import { useDispatch, useSelector } from "react-redux";
-import {
-  LegacyRef,
-  MutableRefObject,
-  RefAttributes,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { setWindowWidth } from "@/state/ElementDimensions/windowWidthSlice";
 import { setHeaderHeight } from "@/state/ElementDimensions/headerHeight";
 import { setWindowHeight } from "@/state/ElementDimensions/windowHeightSlice";
@@ -21,12 +14,17 @@ import {
 } from "@/state/Flags/sidebarIsOpenedSlice";
 import Link from "next/link";
 import LupaIcon from "../Icons/LupaIcon";
+import { setUsedKeyboard } from "@/state/Flags/usedKeyboard";
 
 const Header = () => {
   const [inputOnFocus, setInputOnFocus] = useState(false);
 
   const windowWidth = useSelector(
     (state: RootState) => state.elementsDimensions.windowWidth
+  );
+
+  const usedKeyboard = useSelector(
+    (state: RootState) => state.flags.usedKeyboard
   );
 
   const sidebarIsOpened = useSelector(
@@ -45,6 +43,7 @@ const Header = () => {
   const refInput = useRef() as MutableRefObject<HTMLInputElement>;
 
   useEffect(() => {
+    //Obteniendo el tamaño del header
     const header = document.getElementById("header");
 
     const reziseObserver = new ResizeObserver((entries) => {
@@ -59,6 +58,19 @@ const Header = () => {
 
     reziseObserver.observe(header!);
 
+    //Determinando si se esta usando un teclado o no
+
+    const userAgent = navigator.userAgent.toLowerCase();
+
+    // Patrones para detectar dispositivos móviles
+    const movil = /mobile|android|ipad|iphone|ipod/i.test(userAgent);
+
+    // Si es un dispositivo móvil, se asume que no tiene teclado físico
+    if (!movil) {
+      dispatch(setUsedKeyboard({ value: true }));
+    }
+
+    //Obteniendo el ancho de la ventana interior
     dispatch(setWindowWidth({ value: window.innerWidth }));
     dispatch(setWindowHeight({ value: window.innerHeight }));
 
@@ -121,14 +133,15 @@ const Header = () => {
         <div></div>
 
         <form
+          id="search-form"
           className={`${
             inputOnFocus
               ? "outline-[1px] outline-[#00000070] [outline-style:solid]"
               : ""
-          } aspect-auto py-[0.6rem] px-3 flex items-center justify-center bg-[#CCCCCC] rounded-[0.5rem] gap-x-3 text-[0.9rem] `}
+          } aspect-auto py-[0.6rem] px-3 flex items-center justify-center max-xs:bg-transparent bg-[#CCCCCC] rounded-[0.5rem] gap-x-3 text-[0.9rem]`}
         >
           <LupaIcon
-            className="aspect-auto w-6 -border-2"
+            className="aspect-auto max-xs:w-7 w-6 -border-2"
             fillColor={inputOnFocus ? "#000" : "#5B5B5B"}
           />
           <input
@@ -136,15 +149,23 @@ const Header = () => {
             onBlur={handleBlur}
             onFocus={handleFocus}
             type="text"
-            placeholder="Prueba buscando “Método de la gran M”"
-            className={`text-black w-[23rem] border-black  appearance-none outline-none bg-transparent placeholder:text-[#5B5B5B]`}
+            placeholder={
+              windowWidth < 976
+                ? windowWidth < 500
+                  ? "Buscar"
+                  : "Buscar Métodos"
+                : "Prueba buscando “Método de la gran M”"
+            }
+            className={`text-black max-xs:hidden xs:w-[5rem] sm:w-[7rem] md:w-[13rem] lg:w-[23rem] xl:w-[26rem] border-black appearance-none outline-none bg-transparent placeholder:text-[#5B5B5B]`}
           />
-          <span
-            style={{ boxShadow: "0 2px 3px 2px #00000030" }}
-            className="bg-white px-[0.3rem] py-[0.15rem] rounded-[0.2rem] text-[0.8rem]"
-          >
-            Ctrl + K
-          </span>
+          {usedKeyboard && (
+            <span
+              style={{ boxShadow: "0 2px 3px 2px #00000030" }}
+              className="bg-white px-[0.3rem] py-[0.15rem] rounded-[0.2rem] text-[0.8rem] max-sm:hidden"
+            >
+              Ctrl + K
+            </span>
+          )}
         </form>
         <a href="#">
           <img
@@ -163,6 +184,17 @@ const Header = () => {
           grid-template-columns: max-content max-content auto max-content max-content;
           grid-template-rows: max-content;          
         }
+
+        @media screen and (max-width:480px){
+          #search-form{
+            
+          }
+
+          #search-form input{
+            
+          }
+        }
+
 
 
       `}

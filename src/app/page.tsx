@@ -1,7 +1,7 @@
 "use client";
 
 import ButtonBackground from "@/components/BackgroundsSVG/ButtonBackground";
-import ClientComponent from "@/components/ClientComponent";
+// import ClientComponent from "@/components/ClientComponent";
 
 export default function Home() {
   return (
