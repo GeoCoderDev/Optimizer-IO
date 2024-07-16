@@ -1,7 +1,6 @@
 "use client";
 
 import ButtonBackground from "@/components/BackgroundsSVG/ButtonBackground";
-// import ClientComponent from "@/components/ClientComponent";
 
 export default function Home() {
   return (
@@ -27,7 +26,6 @@ export default function Home() {
           src="/images/svg/FondoBarras.svg"
           alt="Fondo Barras"
         />
-        {/* <ClientComponent /> */}
       </div>
 
       <style>{`

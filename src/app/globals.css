@@ -6,7 +6,14 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
-  
+}
+
+h2 {
+  @apply flex flex-wrap break-words text-[2rem] font-semibold self-center;
+}
+
+h3 {
+  @apply flex flex-wrap break-words text-[1.6rem] font-semibold self-start;
 }
 
 /* @media (prefers-color-scheme: dark) {
@@ -32,4 +39,3 @@ body {
     text-wrap: balance;
   }
 } */
-

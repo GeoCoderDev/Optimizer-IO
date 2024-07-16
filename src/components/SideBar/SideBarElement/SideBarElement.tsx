@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 
 const SideBarElement = ({ IconTSX, route, text }: RouteApp) => {
   const pathName = usePathname();
-  const isSelected = pathName === `/${route}`;
+  const isSelected =
+    pathName.match(`/${route ? route : "//"}`) ||
+    pathName.length === route.length + 1;
 
   return (
     <Link href={`/${route}`}>

@@ -33,7 +33,7 @@ export default function RootLayout({
           <Header />
           <div className="flex relative">
             <SideBar />
-            <main className=" flex-1 flex items-center justify-center">
+            <main className="flex-1 flex items-center justify-center">
               <WrapperMainContent>{children}</WrapperMainContent>
             </main>
           </div>

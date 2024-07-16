@@ -53,7 +53,6 @@ const ClientComponent = () => {
 
   return (
     <>
-      <h1 className="font-sans text-blue-700">Hola mundo</h1>
       <button
         onClick={() => {
           const currentCustomEventWorker = new CustomEventWorker<

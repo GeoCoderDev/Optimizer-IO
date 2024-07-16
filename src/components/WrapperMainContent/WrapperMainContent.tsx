@@ -18,19 +18,20 @@ const WrapperMainContent = ({
 
   return (
     <>
+      <style>{`
+        
+          #main-content{            
+            height: ${windowHeight - headerHeight}px;
+            min-height: ${windowHeight - headerHeight}px;
+          }
+        
+        `}</style>
       <div
         id="main-content"
         className=" w-full flex items-center justify-center p-4"
       >
         {children}
       </div>
-      <style>{`
-      
-        #main-content{            
-            min-height: ${windowHeight - headerHeight}px;
-        }
-      
-      `}</style>
     </>
   );
 };

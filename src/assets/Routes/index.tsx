@@ -1,7 +1,7 @@
+import { IconProps } from "@/components/Icons/Icon.interface";
 import AboutUsIcon from "@/components/Icons/SideBar/AboutUsIcon";
 import DinamicIcon from "@/components/Icons/SideBar/DinamicIcon";
 import HomeIcon from "@/components/Icons/SideBar/HomeIcon";
-import { IconProps } from "@/components/Icons/Icon.interfaces";
 import IntergersIcon from "@/components/Icons/SideBar/IntergersIcon";
 import LineIcon from "@/components/Icons/SideBar/LineIcon";
 import NonLinearIcon from "@/components/Icons/SideBar/NonLinearIcon";
